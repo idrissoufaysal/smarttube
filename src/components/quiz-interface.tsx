@@ -80,7 +80,6 @@ export function QuizInterface({ transcript }: QuizInterfaceProps) {
     }
   };
 
-  // État initial (avant génération)
   if (questions.length === 0 && !isGenerating && !error) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center h-[500px]">
@@ -101,7 +100,6 @@ export function QuizInterface({ transcript }: QuizInterfaceProps) {
     );
   }
 
-  // État de chargement
   if (isGenerating) {
     return (
       <div className="flex flex-col items-center justify-center h-[500px]">
@@ -111,7 +109,6 @@ export function QuizInterface({ transcript }: QuizInterfaceProps) {
     );
   }
 
-  // État d'erreur
   if (error) {
     return (
       <div className="p-6 bg-error-container/20 border border-error text-center rounded-lg mt-8">
@@ -126,7 +123,6 @@ export function QuizInterface({ transcript }: QuizInterfaceProps) {
     );
   }
 
-  // État terminé
   if (isFinished) {
     const percentage = Math.round((score / questions.length) * 100);
     return (
@@ -155,7 +151,6 @@ export function QuizInterface({ transcript }: QuizInterfaceProps) {
 
   const currentQuestion = questions[currentQuestionIndex];
 
-  // État de jeu
   return (
     <div className="flex flex-col h-[600px] py-4">
       <div className="flex justify-between items-center mb-6">

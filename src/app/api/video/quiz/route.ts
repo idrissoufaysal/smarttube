@@ -20,6 +20,8 @@ export const maxDuration = 60; // Autoriser jusqu'à 60 secondes car la généra
 
 export async function POST(req: Request) {
   try {
+        console.log("transciption video")
+
     const { transcript, difficulty = 'moyen', numberOfQuestions = 5 } = await req.json();
 
     if (!transcript) {

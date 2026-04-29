@@ -3,6 +3,7 @@ import { YoutubeTranscript } from 'youtube-transcript';
 
 export async function POST(req: Request) {
   try {
+    console.log("transciption video")
     const { url } = await req.json();
 
     if (!url) {

@@ -1,7 +1,8 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { Send, Mic, Paperclip, Sparkles } from 'lucide-react';
+import {  DefaultChatTransport } from 'ai';
+import { Send, Mic, Paperclip, Sparkles, BrainCircuit } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface ChatInterfaceProps {
@@ -10,24 +11,35 @@ interface ChatInterfaceProps {
 
 export function ChatInterface({ transcript }: ChatInterfaceProps) {
   const [input, setInput] = useState('');
-  const { messages, append, isLoading, setMessages, status } = useChat({
-    api: '/api/chat',
-    body: {
-      transcript
-    }
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      body: { transcript },
+    }),
   });
 
+  const isLoading = status === 'submitted'
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, status]);
 
-  // Formulaire gérant l'appui sur "Entrée" pour soumettre
+  // Scroll instantané pendant le streaming (pas de delay)
+  useEffect(() => {
+    if (status === 'streaming') {
+      containerRef.current?.scrollTo({
+        top: containerRef.current.scrollHeight,
+        behavior: 'instant',
+      });
+    }
+  }, [messages, status]);
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      // On déclenche manuellement la soumission du formulaire
       const form = e.currentTarget.form;
       if (form) form.requestSubmit();
     }
@@ -41,11 +53,10 @@ export function ChatInterface({ transcript }: ChatInterfaceProps) {
 
   return (
     <div className="flex flex-col h-[600px]">
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-6 pr-2 mb-4 scrollbar-thin">
+      <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pr-2 mb-4 scrollbar-thin">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-on-surface-variant space-y-4">
-            <Sparkles className="w-10 h-10 opacity-50" />
+            <BrainCircuit className="w-10 h-10 opacity-50" />
             <p className="text-sm">Bonjour ! Je suis SmartTube AI.<br />Posez-moi des questions sur cette vidéo.</p>
           </div>
         ) : (
@@ -56,18 +67,27 @@ export function ChatInterface({ transcript }: ChatInterfaceProps) {
             >
               <div
                 className={`max-w-[85%] rounded-lg p-4 text-sm ${m.role === 'user'
-                    ? 'bg-primary-container text-on-primary-container font-medium' // Style Utilisateur
-                    : 'bg-surface-high text-on-surface-variant border border-outline-variant' // Style IA
+                    ? 'bg-primary-container text-on-primary-container font-medium'
+                    : 'bg-surface-high text-on-surface-variant border border-outline-variant'
                   }`}
               >
                 {m.role === 'assistant' && (
                   <div className="flex items-center gap-2 mb-3">
-                    <Sparkles className="w-4 h-4 text-primary" />
+                    <BrainCircuit  className="w-4 h-4 text-primary" />
                     <span className="text-xs font-bold text-primary tracking-wider uppercase">SmartTube AI</span>
                   </div>
                 )}
 
-                <p className="leading-relaxed whitespace-pre-wrap">{m.content}</p>
+                {m.parts.map((part, i) => {
+                  if (part.type === 'text') {
+                    return (
+                      <p key={i} className="leading-relaxed whitespace-pre-wrap">
+                        {part.text}
+                      </p>
+                    );
+                  }
+                  return null;
+                })}
 
               </div>
             </div>
@@ -77,7 +97,7 @@ export function ChatInterface({ transcript }: ChatInterfaceProps) {
           <div className="flex justify-start">
             <div className="max-w-[85%] rounded-lg p-4 bg-surface-high border border-outline-variant">
               <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                <BrainCircuit className="w-4 h-4 text-primary animate-pulse" />
                 <span className="text-xs font-bold text-primary tracking-wider uppercase">SmartTube AI</span>
               </div>
               <div className="flex gap-1.5 items-center h-4">
@@ -91,7 +111,6 @@ export function ChatInterface({ transcript }: ChatInterfaceProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
       <div className="bg-surface-lowest border border-surface-highest rounded-2xl p-2 mt-auto">
         <form onSubmit={handleSubmit} className="flex flex-col">
           <textarea
