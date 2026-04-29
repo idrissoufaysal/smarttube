@@ -115,7 +115,7 @@ function StudyContent() {
             </ul>
           </div>
         </div>
-        {/* Right Column - AI Assistant & Questions */}
+
         <div className="space-y-6 sticky top-20">
           <div className="border-b border-[#353534] flex gap-0">
             <button

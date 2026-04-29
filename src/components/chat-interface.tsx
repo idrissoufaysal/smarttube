@@ -37,7 +37,7 @@ export function ChatInterface({ transcript }: ChatInterfaceProps) {
     }
   }, [messages, status]);
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const form = e.currentTarget.form;
@@ -52,7 +52,7 @@ export function ChatInterface({ transcript }: ChatInterfaceProps) {
   };
 
   return (
-    <div className="flex flex-col h-[600px]">
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 12rem)' }}>
       <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pr-2 mb-4 scrollbar-thin">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-on-surface-variant space-y-4">
@@ -112,30 +112,18 @@ export function ChatInterface({ transcript }: ChatInterfaceProps) {
       </div>
 
       <div className="bg-surface-lowest border border-surface-highest rounded-2xl p-2 mt-auto">
-        <form onSubmit={handleSubmit} className="flex flex-col">
-          <textarea
+        <form onSubmit={handleSubmit} className="flex flex-row">
+          <input
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Ask a question about this video..."
             className="w-full bg-transparent text-on-surface p-3 text-sm placeholder-outline-variant focus:outline-none resize-none"
-            rows={2}
             disabled={isLoading}
           />
           <div className="flex items-center justify-between px-2 pb-1 mt-2">
-            <div className="flex items-center gap-3 text-outline-variant">
-              <button type="button" className="hover:text-on-surface-variant transition-colors">
-                <Mic className="w-4 h-4" />
-              </button>
-              <button type="button" className="hover:text-on-surface-variant transition-colors">
-                <Paperclip className="w-4 h-4" />
-              </button>
-            </div>
 
-            <div className="flex items-center gap-4">
-              <span className="text-[10px] font-bold tracking-widest text-outline-variant uppercase hidden sm:block">
-                Press Enter to send
-              </span>
+           
               <button
                 type="submit"
                 disabled={isLoading || !input?.trim()}
@@ -143,7 +131,6 @@ export function ChatInterface({ transcript }: ChatInterfaceProps) {
               >
                 <Send className="w-4 h-4 -ml-0.5" />
               </button>
-            </div>
           </div>
         </form>
       </div>
