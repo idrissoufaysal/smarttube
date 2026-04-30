@@ -45,7 +45,7 @@ export function ChatInterface({ transcript }: ChatInterfaceProps) {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
     sendMessage({ text: input });
     setInput('');
