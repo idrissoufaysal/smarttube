@@ -21,7 +21,7 @@ export function QuizInterface({ transcript }: QuizInterfaceProps) {
   const [isAnswerChecked, setIsAnswerChecked] = useState(false);
   const [score, setScore] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
-  
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -129,7 +129,7 @@ export function QuizInterface({ transcript }: QuizInterfaceProps) {
       <div className="flex flex-col items-center justify-center h-[500px] text-center">
         <div className="text-6xl font-bold text-on-surface mb-2 font-mono">{score}/{questions.length}</div>
         <p className="text-outline-variant font-bold tracking-widest uppercase text-sm mb-8">Score final ({percentage}%)</p>
-        
+
         {percentage >= 80 ? (
           <p className="text-green-400 mb-8 font-medium">Excellent travail !</p>
         ) : percentage >= 50 ? (
@@ -167,7 +167,7 @@ export function QuizInterface({ transcript }: QuizInterfaceProps) {
       <div className="space-y-3 mb-6 overflow-y-auto pr-2 scrollbar-thin">
         {currentQuestion.options.map((option, index) => {
           let buttonClass = "w-full text-left p-4 rounded border transition-all ";
-          
+
           if (!isAnswerChecked) {
             buttonClass += selectedAnswer === index
               ? "bg-primary-container/20 border-primary-container text-primary"
@@ -214,11 +214,10 @@ export function QuizInterface({ transcript }: QuizInterfaceProps) {
           </button>
         ) : (
           <div className="animate-fade-up">
-            <div className={`p-4 rounded mb-4 ${
-              selectedAnswer === currentQuestion.correctAnswerIndex 
-                ? 'bg-green-500/10 border border-green-500/20' 
+            <div className={`p-4 rounded mb-4 ${selectedAnswer === currentQuestion.correctAnswerIndex
+                ? 'bg-green-500/10 border border-green-500/20'
                 : 'bg-error-container/20 border border-error/20'
-            }`}>
+              }`}>
               <p className="text-sm text-on-surface-variant leading-relaxed">
                 <span className={`font-bold block mb-1 ${selectedAnswer === currentQuestion.correctAnswerIndex ? 'text-green-400' : 'text-error'}`}>
                   {selectedAnswer === currentQuestion.correctAnswerIndex ? 'Bonne réponse !' : 'Oups...'}

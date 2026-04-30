@@ -1,9 +1,10 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { ChatInterface } from '@/components/chat-interface';
 import { QuizInterface } from '@/components/quiz-interface';
+import { UrlModal } from '@/components/url-modal';
 
 interface VideoInfo {
   title: string;
@@ -15,13 +16,14 @@ interface VideoInfo {
 }
 
 function StudyContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const url = searchParams.get('url') || '';
+
   const [activeTab, setActiveTab] = useState('ai');
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [transcript, setTranscript] = useState('');
   const [loading, setLoading] = useState(true);
-  const searchParams = useSearchParams();
-
-  const url = searchParams.get('url') || '';
 
   useEffect(() => {
     const stored = sessionStorage.getItem('smarttube_transcript');
@@ -57,7 +59,11 @@ function StudyContent() {
     }
   }
 
-  if (!transcript) {
+  if (!url) {
+    return <UrlModal onSuccess={(newUrl, newTranscript) => setTranscript(newTranscript)} />;
+  }
+
+  if (!transcript && !loading) {
     return (
       <div className="min-h-screen bg-[#0b0b0d] flex items-center justify-center">
         <p className="text-white/50">Aucune transcription disponible.</p>
@@ -67,7 +73,7 @@ function StudyContent() {
 
   return (
     <div className="min-h-screen bg-[#0b0b0d]">
-      <div className="grid grid-cols-3 gap-6 p-6 max-w-6xl mx-auto relative">
+      <div className="grid grid-cols-3 gap-6 p-6 max-w-7xl mx-auto relative">
         <div className="col-span-2 space-y-6">
           <div className="bg-[#0e0e0e] rounded-lg overflow-hidden aspect-video relative">
             {url ? (
@@ -79,7 +85,7 @@ function StudyContent() {
                 allowFullScreen
               />
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-[#2a5a8a] to-[#0e0e0e] opacity-20" />
+              <div className="absolute inset-0 bg-linear-to-br from-[#2a5a8a] to-[#0e0e0e] opacity-20" />
             )}
           </div>
 
@@ -88,7 +94,7 @@ function StudyContent() {
               {videoInfo?.title || 'Vidéo en cours de chargement...'}
             </h1>
             <div className="flex items-center gap-4 text-sm text-[#ebbbb4]">
-              <span>📅 {new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+              <span> {new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
               <div className="flex gap-2">
                 <span className="bg-[#353534] text-[#ffb4a8] px-3 py-1 rounded text-xs font-semibold">AI/ML</span>
               </div>
@@ -116,35 +122,36 @@ function StudyContent() {
           </div>
         </div>
 
-        <div className="space-y-6 sticky top-20">
-          <div className="border-b border-[#353534] flex gap-0">
+
+        <div className="space-y-6 sticky top-20 h-[calc(100vh-90px)] flex flex-col">
+          <div className="border-b border-[#353534] flex gap-0 shrink-0">
             <button
               onClick={() => setActiveTab('ai')}
-              className={`flex-1 py-4 text-sm font-semibold border-b-2 transition ${
-                activeTab === 'ai'
-                  ? 'text-[#ffb4a8] border-[#ffb4a8]'
-                  : 'text-[#603e39] border-transparent hover:text-[#ebbbb4]'
-              }`}
+              className={`flex-1 py-4 text-sm font-semibold border-b-2 transition ${activeTab === 'ai'
+                ? 'text-[#ffb4a8] border-[#ffb4a8]'
+                : 'text-[#603e39] border-transparent hover:text-[#ebbbb4]'
+                }`}
             >
               AI Assistant
             </button>
             <button
               onClick={() => setActiveTab('practice')}
-              className={`flex-1 py-4 text-sm font-semibold border-b-2 transition ${
-                activeTab === 'practice'
-                  ? 'text-[#ffb4a8] border-[#ffb4a8]'
-                  : 'text-[#603e39] border-transparent hover:text-[#ebbbb4]'
-              }`}
+              className={`flex-1 py-4 text-sm font-semibold border-b-2 transition ${activeTab === 'practice'
+                ? 'text-[#ffb4a8] border-[#ffb4a8]'
+                : 'text-[#603e39] border-transparent hover:text-[#ebbbb4]'
+                }`}
             >
               Practice Questions
             </button>
           </div>
 
-          {activeTab === 'ai' ? (
-            <ChatInterface transcript={transcript} />
-          ) : (
-            <QuizInterface transcript={transcript} />
-          )}
+          <div className="flex-1 overflow-hidden">
+            {activeTab === 'ai' ? (
+              <ChatInterface transcript={transcript} />
+            ) : (
+              <QuizInterface transcript={transcript} />
+            )}
+          </div>
         </div>
       </div>
     </div>

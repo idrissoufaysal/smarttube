@@ -1,7 +1,7 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import {  DefaultChatTransport } from 'ai';
+import { DefaultChatTransport } from 'ai';
 import { Send, Mic, Paperclip, Sparkles, BrainCircuit } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -67,13 +67,13 @@ export function ChatInterface({ transcript }: ChatInterfaceProps) {
             >
               <div
                 className={`max-w-[85%] rounded-lg p-4 text-sm ${m.role === 'user'
-                    ? 'bg-primary-container text-on-primary-container font-medium'
-                    : 'bg-surface-high text-on-surface-variant border border-outline-variant'
+                  ? 'bg-primary-container text-on-primary-container font-medium'
+                  : 'bg-surface-high text-on-surface-variant border border-outline-variant'
                   }`}
               >
                 {m.role === 'assistant' && (
                   <div className="flex items-center gap-2 mb-3">
-                    <BrainCircuit  className="w-4 h-4 text-primary" />
+                    <BrainCircuit className="w-4 h-4 text-primary" />
                     <span className="text-xs font-bold text-primary tracking-wider uppercase">SmartTube AI</span>
                   </div>
                 )}
@@ -108,7 +108,6 @@ export function ChatInterface({ transcript }: ChatInterfaceProps) {
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       <div className="bg-surface-lowest border border-surface-highest rounded-2xl p-2 mt-auto">
@@ -123,14 +122,14 @@ export function ChatInterface({ transcript }: ChatInterfaceProps) {
           />
           <div className="flex items-center justify-between px-2 pb-1 mt-2">
 
-           
-              <button
-                type="submit"
-                disabled={isLoading || !input?.trim()}
-                className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Send className="w-4 h-4 -ml-0.5" />
-              </button>
+
+            <button
+              type="submit"
+              disabled={isLoading || !input?.trim()}
+              className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Send className="w-4 h-4 -ml-0.5" />
+            </button>
           </div>
         </form>
       </div>
