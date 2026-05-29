@@ -147,7 +147,7 @@ function StudyContent() {
 
           <div className="flex-1 overflow-hidden">
             {activeTab === 'ai' ? (
-              <ChatInterface transcript={transcript} />
+              <ChatInterface transcript={transcript} url={url} />
             ) : (
               <QuizInterface transcript={transcript} />
             )}

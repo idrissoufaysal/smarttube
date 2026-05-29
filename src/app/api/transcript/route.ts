@@ -1,4 +1,7 @@
 import { YoutubeTranscript } from 'youtube-transcript';
+import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
+import { getVectorStore } from '@/lib/pinecone';
+import { Document } from '@langchain/core/documents';
 
 export async function POST(req: Request) {
   try {
@@ -21,11 +24,45 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Aucune transcription disponible pour cette vidéo.' }, { status: 404 });
     }
 
+    // Indexation dans Pinecone pour le RAG
+    let pineconeIndexed = false;
+    let pineconeErrorMsg = '';
+
+    try {
+      const splitter = new RecursiveCharacterTextSplitter({
+        chunkSize: 1000,
+        chunkOverlap: 200,
+      });
+
+      const documents = transcriptItems.map((item) => {
+        return new Document({
+          pageContent: item.text,
+          metadata: {
+            videoId,
+            start: item.offset,
+            duration: item.duration,
+          },
+        });
+      });
+
+      const splits = await splitter.splitDocuments(documents);
+
+      const vectorStore = await getVectorStore(videoId);
+      await vectorStore.addDocuments(splits);
+      console.log(`[Pinecone] ${splits.length} segments indexés dans le namespace "${videoId}"`);
+      pineconeIndexed = true;
+    } catch (pineconeError: any) {
+      console.error("Erreur lors de l'indexation Pinecone:", pineconeError);
+      pineconeErrorMsg = pineconeError.message || "Erreur de configuration Pinecone.";
+    }
+
     // Retourne les segments avec timestamps + le texte concaténé pour le chat
     const transcript = transcriptItems.map((item) => item.text).join(' ');
 
     return Response.json({
       transcript,
+      pineconeIndexed,
+      pineconeError: pineconeErrorMsg,
       segments: transcriptItems.map((item) => ({
         text: item.text,
         start: item.offset,

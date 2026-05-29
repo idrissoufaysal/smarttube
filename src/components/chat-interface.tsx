@@ -7,14 +7,17 @@ import { useEffect, useRef, useState } from 'react';
 
 interface ChatInterfaceProps {
   transcript: string;
+  url?: string;
 }
 
-export function ChatInterface({ transcript }: ChatInterfaceProps) {
+export function ChatInterface({ transcript, url }: ChatInterfaceProps) {
   const [input, setInput] = useState('');
+  const videoId = url ? extractVideoId(url) : null;
+
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
-      body: { transcript },
+      body: { transcript, videoId },
     }),
   });
 
@@ -135,4 +138,19 @@ export function ChatInterface({ transcript }: ChatInterfaceProps) {
       </div>
     </div>
   );
+}
+
+function extractVideoId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/,
+    /youtube\.com\/embed\/([\w-]{11})/,
+    /youtube\.com\/shorts\/([\w-]{11})/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+
+  return null;
 }
