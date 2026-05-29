@@ -24,6 +24,7 @@ function StudyContent() {
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [transcript, setTranscript] = useState('');
   const [loading, setLoading] = useState(true);
+  const [playerStart, setPlayerStart] = useState<number | null>(null);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('smarttube_transcript');
@@ -79,7 +80,8 @@ function StudyContent() {
             {url ? (
               <iframe
                 className="absolute inset-0 w-full h-full"
-                src={`https://www.youtube.com/embed/${extractVideoId(url)}`}
+                src={`https://www.youtube.com/embed/${extractVideoId(url)}${playerStart !== null ? `?start=${playerStart}&autoplay=1` : ''}`}
+                key={playerStart !== null ? playerStart : 'default'}
                 title="YouTube video player"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -147,7 +149,18 @@ function StudyContent() {
 
           <div className="flex-1 overflow-hidden">
             {activeTab === 'ai' ? (
-              <ChatInterface transcript={transcript} url={url} />
+              transcript ? (
+                <ChatInterface
+                  transcript={transcript}
+                  url={url}
+                  onTimelineClick={(seconds) => setPlayerStart(seconds)}
+                />
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-on-surface-variant space-y-4">
+                  <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                  <p className="text-sm">Chargement de la transcription...</p>
+                </div>
+              )
             ) : (
               <QuizInterface transcript={transcript} />
             )}

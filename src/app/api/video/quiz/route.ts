@@ -1,5 +1,6 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { generateObject } from 'ai';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { generateObject,generateText } from 'ai';
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
 
@@ -20,7 +21,7 @@ export const maxDuration = 60; // Autoriser jusqu'à 60 secondes car la généra
 
 export async function POST(req: Request) {
   try {
-        console.log("transciption video")
+    console.log("Génération de quiz demandée");
 
     const { transcript, difficulty = 'moyen', numberOfQuestions = 5 } = await req.json();
 
@@ -28,12 +29,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'La transcription est requise' }, { status: 400 });
     }
 
-    const google = createGoogleGenerativeAI({
-      apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-    });
+    const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    const openrouterKey = process.env.AI_KEY;
+
+    let model;
+
+    if (geminiKey) {
+      const google = createGoogleGenerativeAI({ apiKey: geminiKey });
+      model = google('gemini-1.5-flash');
+    } else if (openrouterKey) {
+      const openrouter = createOpenRouter({ apiKey: openrouterKey });
+      model = openrouter.chat('nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free');
+    } else {
+      return NextResponse.json(
+        { error: "Veuillez configurer GEMINI_API_KEY ou AI_KEY dans votre fichier .env." },
+        { status: 400 }
+      );
+    }
 
     const { object } = await generateObject({
-      model: google('gemini-1.5-flash'),
+      model,
       schema: quizSchema,
       prompt: `Tu es un professeur expert. Génère un QCM (Quiz) à choix multiples basé EXCLUSIVEMENT sur la transcription vidéo suivante :
 
@@ -50,7 +65,7 @@ Instructions :
 
     // Retourner l'objet structuré validé
     return NextResponse.json({ quiz: object });
-    
+
   } catch (error: any) {
     console.error('Erreur Génération Quiz:', error);
     return NextResponse.json(

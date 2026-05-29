@@ -8,36 +8,103 @@ import { useEffect, useRef, useState } from 'react';
 interface ChatInterfaceProps {
   transcript: string;
   url?: string;
-}
+  onTimelineClick?: (seconds: number) => void;
+} 
 
-export function ChatInterface({ transcript, url }: ChatInterfaceProps) {
+export function ChatInterface({ transcript, url, onTimelineClick }: ChatInterfaceProps) {
   const [input, setInput] = useState('');
+
+  const renderMessageContent = (text: string) => {
+    // Regex pour capturer [Source: mm:ss] ou [Source: hh:mm:ss]
+    const regex = /\[Source:\s*(\d{1,2}):(\d{2})(?::(\d{2}))?\]/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+      // Texte avant la source
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+
+      const part1 = parseInt(match[1], 10);
+      const part2 = parseInt(match[2], 10);
+      const part3 = match[3] ? parseInt(match[3], 10) : undefined;
+
+      let totalSeconds = 0;
+      if (part3 !== undefined) {
+        // hh:mm:ss
+        totalSeconds = part1 * 3600 + part2 * 60 + part3;
+      } else {
+        // mm:ss
+        totalSeconds = part1 * 60 + part2;
+      }
+
+      const label = part3 !== undefined 
+        ? `${part1.toString().padStart(2, '0')}:${part2.toString().padStart(2, '0')}:${part3.toString().padStart(2, '0')}`
+        : `${part1.toString().padStart(2, '0')}:${part2.toString().padStart(2, '0')}`;
+
+      parts.push(
+        <button
+          key={match.index}
+          onClick={() => onTimelineClick && onTimelineClick(totalSeconds)}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 my-1 mx-1 bg-primary/10 border border-primary/20 rounded-full text-xs font-bold text-primary hover:bg-primary/20 active:scale-95 transition-all cursor-pointer inline-block"
+          type="button"
+        >
+          <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>play_circle</span>
+          [Source: {label}]
+        </button>
+      );
+
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
+  };
   const videoId = url ? extractVideoId(url) : null;
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
       body: { transcript, videoId },
-    }),
+    })
   });
 
   const isLoading = status === 'submitted'
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastMessagesLengthRef = useRef(messages.length);
 
+  // Smart auto-scroll logic
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, status]);
+    const container = containerRef.current;
+    if (!container) return;
 
-  // Scroll instantané pendant le streaming (pas de delay)
-  useEffect(() => {
-    if (status === 'streaming') {
-      containerRef.current?.scrollTo({
-        top: containerRef.current.scrollHeight,
-        behavior: 'instant',
+    const hasNewMessage = messages.length > lastMessagesLengthRef.current;
+    const lastMessage = messages[messages.length - 1];
+    const isUserLastMessage = lastMessage?.role === 'user';
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
+
+    // Smooth scroll for new user messages, instant scroll for streaming/responses if already near bottom
+    if (hasNewMessage && isUserLastMessage) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth',
+      });
+    } else if (isNearBottom || (hasNewMessage && !isUserLastMessage)) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'auto',
       });
     }
+
+    lastMessagesLengthRef.current = messages.length;
   }, [messages, status]);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -84,9 +151,9 @@ export function ChatInterface({ transcript, url }: ChatInterfaceProps) {
                 {m.parts.map((part, i) => {
                   if (part.type === 'text') {
                     return (
-                      <p key={i} className="leading-relaxed whitespace-pre-wrap">
-                        {part.text}
-                      </p>
+                      <div key={i} className="leading-relaxed whitespace-pre-wrap">
+                        {renderMessageContent(part.text)}
+                      </div>
                     );
                   }
                   return null;

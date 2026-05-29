@@ -12,6 +12,7 @@ export function getEmbeddings() {
   return new OpenAIEmbeddings({
     apiKey,
     modelName: "nvidia/llama-nemotron-embed-vl-1b-v2:free",
+    encodingFormat: "float",
     configuration: {
       baseURL: "https://openrouter.ai/api/v1",
       defaultHeaders: {
