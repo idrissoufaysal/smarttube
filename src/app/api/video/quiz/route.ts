@@ -1,11 +1,11 @@
+import { prisma } from '@/lib/db';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { generateObject,generateText } from 'ai';
+import { generateObject } from 'ai';
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
 
-// Le schéma Zod définit exactement la structure de données que Gemini doit retourner.
-// Cela garantit que le client recevra un JSON formaté correctement.
+// Le schéma Zod définit exactement la structure de données de quiz.
 const quizSchema = z.object({
   questions: z.array(
     z.object({
@@ -17,18 +17,46 @@ const quizSchema = z.object({
   )
 });
 
-export const maxDuration = 60; // Autoriser jusqu'à 60 secondes car la génération structurée peut prendre du temps
+export const maxDuration = 60; // Autoriser jusqu'à 60 secondes pour la génération d'IA structurée
 
 export async function POST(req: Request) {
   try {
     console.log("Génération de quiz demandée");
 
-    const { transcript, difficulty = 'moyen', numberOfQuestions = 5 } = await req.json();
+    const { transcript, difficulty = 'moyen', numberOfQuestions = 5, videoId } = await req.json();
 
     if (!transcript) {
       return NextResponse.json({ error: 'La transcription est requise' }, { status: 400 });
     }
 
+    // 1. Tenter de récupérer un quiz déjà généré depuis la base de données PostgreSQL
+    if (videoId) {
+      const cachedQuiz = await prisma.quiz.findFirst({
+        where: {
+          videoId: videoId,
+          difficulty: difficulty,
+        },
+        include: {
+          questions: true,
+        },
+      });
+
+      if (cachedQuiz && cachedQuiz.questions.length > 0) {
+        console.log(`[Cache] Quiz pour la vidéo "${videoId}" (${difficulty}) récupéré depuis PostgreSQL.`);
+        return NextResponse.json({
+          quiz: {
+            questions: cachedQuiz.questions.map((q) => ({
+              question: q.question,
+              options: q.options,
+              correctAnswerIndex: q.correctAnswerIndex,
+              explanation: q.explanation,
+            })),
+          },
+        });
+      }
+    }
+
+    // 2. Cache miss : Choisir et initialiser le modèle d'IA disponible
     const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
     const openrouterKey = process.env.AI_KEY;
 
@@ -47,6 +75,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // 3. Générer le quiz structuré via l'IA
     const { object } = await generateObject({
       model,
       schema: quizSchema,
@@ -63,7 +92,29 @@ Instructions :
 - Ne pose pas de questions sur des choses qui ne sont pas dites dans la transcription.`,
     });
 
-    // Retourner l'objet structuré validé
+    // 4. Enregistrer le nouveau quiz dans la base de données PostgreSQL pour les prochaines requêtes
+    if (videoId) {
+      try {
+        await prisma.quiz.create({
+          data: {
+            videoId: videoId,
+            difficulty: difficulty,
+            questions: {
+              create: object.questions.map((q) => ({
+                question: q.question,
+                options: q.options,
+                correctAnswerIndex: q.correctAnswerIndex,
+                explanation: q.explanation,
+              })),
+            },
+          },
+        });
+        console.log(`[Database] Nouveau quiz enregistré pour la vidéo "${videoId}" (${difficulty}).`);
+      } catch (dbError) {
+        console.warn("[Database] Impossible d'enregistrer le quiz généré en cache :", dbError);
+      }
+    }
+
     return NextResponse.json({ quiz: object });
 
   } catch (error: any) {

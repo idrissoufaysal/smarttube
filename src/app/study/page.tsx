@@ -95,11 +95,6 @@ function StudyContent() {
                 <VideoPlayer
                   playerRef={playerRef}
                   url={url}
-                  controls
-                  
-                  playing
-                  width="100%"
-                  height="100%"
                 />
               </div>
             ) : (

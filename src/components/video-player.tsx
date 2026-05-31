@@ -21,6 +21,7 @@ export default function VideoPlayer({ url, playerRef }: VideoPlayerProps) {
       logLevel="warn"
       crossOrigin
       playsInline
+      autoplay
       className="w-full h-full bg-black"
     >
       <MediaProvider />

@@ -1,3 +1,4 @@
+import { prisma } from '@/lib/db';
 import { Innertube } from 'youtubei.js';
 
 export async function POST(req: Request) {
@@ -14,12 +15,27 @@ export async function POST(req: Request) {
       return Response.json({ error: 'URL YouTube invalide.' }, { status: 400 });
     }
 
-    // Crée une instance YouTube
+    // 1. Tenter de récupérer la vidéo depuis le cache PostgreSQL
+    const cachedVideo = await prisma.video.findUnique({
+      where: { id: videoId },
+    });
+
+    if (cachedVideo) {
+      console.log(`[Cache] Métadonnées de la vidéo "${videoId}" récupérées depuis PostgreSQL.`);
+      return Response.json({
+        title: cachedVideo.title,
+        description: cachedVideo.description || '',
+        thumbnail: cachedVideo.thumbnail || '',
+        author: cachedVideo.author || '',
+        viewCount: 0, // Optionnel, fallback
+        publishDate: '', // Optionnel, fallback
+        duration: cachedVideo.duration,
+      });
+    }
+
+    // 2. Cache miss: Crée une instance YouTube et extrait les informations en ligne
     const yt = await Innertube.create();
-
-    // Récupère les infos de la vidéo
     const info = await yt.getInfo(videoId);
-
     const basicInfo = info.basic_info;
 
     return Response.json({
