@@ -2,9 +2,14 @@
 
 import { Suspense, useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { ChatInterface } from '@/components/chat-interface';
+import type { MediaPlayerInstance } from '@vidstack/react';
+
 import { QuizInterface } from '@/components/quiz-interface';
 import { UrlModal } from '@/components/url-modal';
+
+const VideoPlayer = dynamic(() => import('@/components/video-player'), { ssr: false });
 
 interface VideoInfo {
   title: string;
@@ -24,9 +29,17 @@ function StudyContent() {
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [transcript, setTranscript] = useState('');
   const [loading, setLoading] = useState(true);
-  const [playerStart, setPlayerStart] = useState<number | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+  const playerRef = useRef<MediaPlayerInstance | null>(null);
+
+  const handleTimelineClick = (seconds: number) => {
+    if (playerRef.current) {
+      playerRef.current.remoteControl.seek(seconds);
+    }
+  };
 
   useEffect(() => {
+    setIsMounted(true);
     const stored = sessionStorage.getItem('smarttube_transcript');
     if (stored) setTranscript(stored);
 
@@ -77,15 +90,18 @@ function StudyContent() {
       <div className="grid grid-cols-3 gap-6 p-6 max-w-7xl mx-auto relative">
         <div className="col-span-2 space-y-6">
           <div className="bg-[#0e0e0e] rounded-lg overflow-hidden aspect-video relative">
-            {url ? (
-              <iframe
-                className="absolute inset-0 w-full h-full"
-                src={`https://www.youtube.com/embed/${extractVideoId(url)}${playerStart !== null ? `?start=${playerStart}&autoplay=1` : ''}`}
-                key={playerStart !== null ? playerStart : 'default'}
-                title="YouTube video player"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+            {url && isMounted ? (
+              <div className="absolute inset-0 w-full h-full">
+                <VideoPlayer
+                  playerRef={playerRef}
+                  url={url}
+                  controls
+                  
+                  playing
+                  width="100%"
+                  height="100%"
+                />
+              </div>
             ) : (
               <div className="absolute inset-0 bg-linear-to-br from-[#2a5a8a] to-[#0e0e0e] opacity-20" />
             )}
@@ -153,7 +169,7 @@ function StudyContent() {
                 <ChatInterface
                   transcript={transcript}
                   url={url}
-                  onTimelineClick={(seconds) => setPlayerStart(seconds)}
+                  onTimelineClick={handleTimelineClick}
                 />
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-on-surface-variant space-y-4">
