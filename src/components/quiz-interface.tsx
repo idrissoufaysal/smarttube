@@ -12,9 +12,10 @@ interface QuizQuestion {
 
 interface QuizInterfaceProps {
   transcript: string;
+  videoId?: string;
 }
 
-export function QuizInterface({ transcript }: QuizInterfaceProps) {
+export function QuizInterface({ transcript, videoId }: QuizInterfaceProps) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -39,7 +40,7 @@ export function QuizInterface({ transcript }: QuizInterfaceProps) {
       const res = await fetch('/api/video/quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript, difficulty: 'moyen', numberOfQuestions: 5 }),
+        body: JSON.stringify({ transcript, difficulty: 'moyen', numberOfQuestions: 5, videoId }),
       });
 
       if (!res.ok) throw new Error('Erreur lors de la génération du quiz');

@@ -24,6 +24,7 @@ function StudyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const url = searchParams.get('url') || '';
+  const videoId = url ? extractVideoId(url) || undefined : undefined;
 
   const [activeTab, setActiveTab] = useState('ai');
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
@@ -173,7 +174,7 @@ function StudyContent() {
                 </div>
               )
             ) : (
-              <QuizInterface transcript={transcript} />
+              <QuizInterface transcript={transcript} videoId={videoId} />
             )}
           </div>
         </div>

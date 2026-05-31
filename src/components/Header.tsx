@@ -23,7 +23,7 @@ export function Header() {
           </a>
           <nav className="hidden items-center gap-6 text-sm text-white/50 md:flex">
             <a href="/" className="transition-colors duration-200 hover:text-white/90">Home</a>
-            <a href="#" className="transition-colors duration-200 hover:text-white/90">My Library</a>
+            <a href="/library" className="transition-colors duration-200 hover:text-white/90">My Library</a>
             <a href="#" className="transition-colors duration-200 hover:text-white/90">Explore</a>
           </nav>
         </div>
