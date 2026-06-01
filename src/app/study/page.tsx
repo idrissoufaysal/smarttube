@@ -31,11 +31,39 @@ function StudyContent() {
   const [transcript, setTranscript] = useState('');
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
+  const [maxScore, setMaxScore] = useState<string | null>(null);
   const playerRef = useRef<MediaPlayerInstance | null>(null);
 
   const handleTimelineClick = (seconds: number) => {
     if (playerRef.current) {
       playerRef.current.remoteControl.seek(seconds);
+    }
+  };
+
+  const fetchQuizStats = async () => {
+    if (!videoId) return;
+    try {
+      const res = await fetch(`/api/quiz/attempt?videoId=${videoId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const attempts = data.attempts || [];
+        if (attempts.length > 0) {
+          let maxPct = 0;
+          let bestAttempt = attempts[0];
+          attempts.forEach((att: any) => {
+            const pct = (att.score / att.total) * 100;
+            if (pct > maxPct) {
+              maxPct = pct;
+              bestAttempt = att;
+            }
+          });
+          setMaxScore(`${bestAttempt.score}/${bestAttempt.total}`);
+        } else {
+          setMaxScore(null);
+        }
+      }
+    } catch (err) {
+      console.error('Erreur stats quiz:', err);
     }
   };
 
@@ -48,6 +76,12 @@ function StudyContent() {
       extractVideoTitle(url);
     }
   }, [url]);
+
+  useEffect(() => {
+    if (videoId) {
+      fetchQuizStats();
+    }
+  }, [videoId, activeTab]);
 
   async function extractVideoTitle(videoUrl: string) {
     try {
@@ -109,11 +143,17 @@ function StudyContent() {
             </h1>
             <div className="flex items-center gap-4 text-sm text-[#ebbbb4]">
               <span> {new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <span className="bg-[#353534] text-[#ffb4a8] px-3 py-1 rounded text-xs font-semibold">AI/ML</span>
+                {maxScore && (
+                  <span className="bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-0.5 rounded-md text-xs font-extrabold flex items-center gap-1 animate-fade-in">
+                    🏆 Score Max: {maxScore}
+                  </span>
+                )}
               </div>
             </div>
           </div>
+
 
           <div className="bg-[#201f1f] rounded-lg p-6 border border-[#353534]">
             <h2 className="text-sm font-bold text-[#ffb4a8] mb-4 uppercase tracking-wider">

@@ -61,3 +61,13 @@ export type Quiz = Prisma.QuizModel
  * 
  */
 export type QuizQuestion = Prisma.QuizQuestionModel
+/**
+ * Model QuizAttempt
+ * 
+ */
+export type QuizAttempt = Prisma.QuizAttemptModel
+/**
+ * Model ChatMessage
+ * 
+ */
+export type ChatMessage = Prisma.ChatMessageModel

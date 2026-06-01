@@ -1,17 +1,76 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
-import { Send, Mic, Paperclip, Sparkles, BrainCircuit } from 'lucide-react';
+import { DefaultChatTransport, UIMessage } from 'ai';
+import { Send, BrainCircuit } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface ChatInterfaceProps {
   transcript: string;
   url?: string;
   onTimelineClick?: (seconds: number) => void;
-} 
+}
 
 export function ChatInterface({ transcript, url, onTimelineClick }: ChatInterfaceProps) {
+  const videoId = url ? extractVideoId(url) : null;
+  const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+
+  useEffect(() => {
+    if (!videoId) {
+      setIsLoadingHistory(false);
+      return;
+    }
+
+    fetch(`/api/chat/history?videoId=${videoId}`, {
+    next: { revalidate: 60 },
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setInitialMessages(
+            data.map(m => ({
+              id: m.id,
+              role: m.role as 'user' | 'assistant' | 'system',
+              content: m.content,
+              parts: [{ type: 'text', text: m.content }],
+            }))
+          );
+        }
+      })
+      .catch(console.error)
+      .finally(() => setIsLoadingHistory(false));
+  }, [videoId]);
+
+  if (isLoadingHistory) {
+    return (
+      <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 12rem)' }}>
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return (
+    <ChatInterfaceInner 
+      transcript={transcript} 
+      videoId={videoId} 
+      onTimelineClick={onTimelineClick} 
+      initialMessages={initialMessages} 
+    />
+  );
+}
+
+function ChatInterfaceInner({ 
+  transcript, 
+  videoId, 
+  onTimelineClick, 
+  initialMessages 
+}: { 
+  transcript: string, 
+  videoId: string | null, 
+  onTimelineClick?: (seconds: number) => void,
+  initialMessages: UIMessage[]
+}) {
   const [input, setInput] = useState('');
 
   const renderMessageContent = (text: string) => {
@@ -65,16 +124,16 @@ export function ChatInterface({ transcript, url, onTimelineClick }: ChatInterfac
 
     return parts.length > 0 ? parts : text;
   };
-  const videoId = url ? extractVideoId(url) : null;
 
   const { messages, sendMessage, status } = useChat({
+    messages: initialMessages,
     transport: new DefaultChatTransport({
       api: '/api/chat',
       body: { transcript, videoId },
     })
   });
 
-  const isLoading = status === 'submitted'
+  const isLoading = status === 'submitted';
 
   const containerRef = useRef<HTMLDivElement>(null);
   const lastMessagesLengthRef = useRef(messages.length);
@@ -148,7 +207,7 @@ export function ChatInterface({ transcript, url, onTimelineClick }: ChatInterfac
                   </div>
                 )}
 
-                {m.parts.map((part, i) => {
+                {m.parts ? m.parts.map((part, i) => {
                   if (part.type === 'text') {
                     return (
                       <div key={i} className="leading-relaxed whitespace-pre-wrap">
@@ -157,7 +216,11 @@ export function ChatInterface({ transcript, url, onTimelineClick }: ChatInterfac
                     );
                   }
                   return null;
-                })}
+                }) : typeof (m as any).content === 'string' && (
+                   <div className="leading-relaxed whitespace-pre-wrap">
+                      {renderMessageContent((m as any).content)}
+                   </div>
+                )}
 
               </div>
             </div>
@@ -191,7 +254,6 @@ export function ChatInterface({ transcript, url, onTimelineClick }: ChatInterfac
             disabled={isLoading}
           />
           <div className="flex items-center justify-between px-2 pb-1 mt-2">
-
 
             <button
               type="submit"

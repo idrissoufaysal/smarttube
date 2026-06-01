@@ -54,7 +54,9 @@ export const ModelName = {
   Video: 'Video',
   Segment: 'Segment',
   Quiz: 'Quiz',
-  QuizQuestion: 'QuizQuestion'
+  QuizQuestion: 'QuizQuestion',
+  QuizAttempt: 'QuizAttempt',
+  ChatMessage: 'ChatMessage'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -120,6 +122,31 @@ export const QuizQuestionScalarFieldEnum = {
 } as const
 
 export type QuizQuestionScalarFieldEnum = (typeof QuizQuestionScalarFieldEnum)[keyof typeof QuizQuestionScalarFieldEnum]
+
+
+export const QuizAttemptScalarFieldEnum = {
+  id: 'id',
+  videoId: 'videoId',
+  quizId: 'quizId',
+  userId: 'userId',
+  score: 'score',
+  total: 'total',
+  difficulty: 'difficulty',
+  createdAt: 'createdAt'
+} as const
+
+export type QuizAttemptScalarFieldEnum = (typeof QuizAttemptScalarFieldEnum)[keyof typeof QuizAttemptScalarFieldEnum]
+
+
+export const ChatMessageScalarFieldEnum = {
+  id: 'id',
+  videoId: 'videoId',
+  role: 'role',
+  content: 'content',
+  createdAt: 'createdAt'
+} as const
+
+export type ChatMessageScalarFieldEnum = (typeof ChatMessageScalarFieldEnum)[keyof typeof ChatMessageScalarFieldEnum]
 
 
 export const SortOrder = {

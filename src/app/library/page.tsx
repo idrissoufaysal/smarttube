@@ -13,9 +13,18 @@ async function getLibraryVideos() {
         duration: true,
         createdAt: true,
         _count: { select: { segments: true } },
+        attempts: {
+          select: {
+            score: true,
+            total: true,
+          }
+        }
       },
     });
-  } catch {
+    console.log();
+    
+  } catch (error) {
+    console.error("PRISMA ERROR IN LIBRARY:", error);
     return null; // DB not configured — graceful fallback
   }
 }
@@ -74,6 +83,7 @@ type VideoCard = {
   duration: number;
   createdAt: Date;
   _count: { segments: number };
+  attempts: { score: number; total: number }[];
 };
 
 function VideoCardSkeleton() {
@@ -144,6 +154,46 @@ function VideoCardComponent({ video }: { video: VideoCard }) {
         {video.author && (
           <p className="text-xs text-white/40 mb-3 truncate">{video.author}</p>
         )}
+
+        {/* Mastered / Studied Quiz Badges */}
+        {video.attempts && video.attempts.length > 0 ? (() => {
+          let maxPct = 0;
+          let bestAttempt = video.attempts[0];
+          video.attempts.forEach(att => {
+            const pct = (att.score / att.total) * 100;
+            if (pct > maxPct) {
+              maxPct = pct;
+              bestAttempt = att;
+            }
+          });
+
+          const isMastered = maxPct >= 80;
+
+          return (
+            <div className="flex items-center gap-2 mb-3 animate-fade-in">
+              <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md border tracking-wider ${
+                isMastered 
+                  ? 'bg-green-500/10 text-green-400 border-green-500/20' 
+                  : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+              }`}>
+                {isMastered ? '🏆 MAÎTRISÉ' : `💡 APPRIS`}
+              </span>
+              <span className="text-[10px] text-white/50 font-bold font-mono">
+                Quiz : {bestAttempt.score}/{bestAttempt.total} ({video.attempts.length} t.)
+              </span>
+            </div>
+          );
+        })() : (
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-md border bg-white/5 text-white/30 border-white/5 tracking-wider">
+              📖 REVOIR
+            </span>
+            <span className="text-[10px] text-white/25">
+              Quiz non tenté
+            </span>
+          </div>
+        )}
+
         <div className="flex items-center gap-4 text-[10px] text-white/30 font-medium">
           <span className="flex items-center gap-1">
             <IconBook />
@@ -175,15 +225,21 @@ export default async function LibraryPage() {
             </div>
             {videos && videos.length > 0 && (
               <div className="flex items-center gap-3 shrink-0">
-                <div className="rounded-2xl bg-[#111115] px-5 py-3 text-center">
-                  <p className="text-2xl font-extrabold gradient-primary-text">{videos.length}</p>
-                  <p className="text-[10px] text-white/35 uppercase tracking-widest mt-0.5">Videos</p>
+                <div className="rounded-2xl bg-[#111115] px-4 py-2.5 text-center min-w-[70px]">
+                  <p className="text-xl font-extrabold gradient-primary-text">{videos.length}</p>
+                  <p className="text-[9px] text-white/35 uppercase tracking-widest mt-0.5">Videos</p>
                 </div>
-                <div className="rounded-2xl bg-[#111115] px-5 py-3 text-center">
-                  <p className="text-2xl font-extrabold gradient-primary-text">
+                <div className="rounded-2xl bg-[#111115] px-4 py-2.5 text-center min-w-[70px]">
+                  <p className="text-xl font-extrabold gradient-primary-text">
                     {videos.reduce((acc, v) => acc + v._count.segments, 0).toLocaleString()}
                   </p>
-                  <p className="text-[10px] text-white/35 uppercase tracking-widest mt-0.5">Segments</p>
+                  <p className="text-[9px] text-white/35 uppercase tracking-widest mt-0.5">Segments</p>
+                </div>
+                <div className="rounded-2xl bg-[#111115] px-4 py-2.5 text-center min-w-[70px]">
+                  <p className="text-xl font-extrabold gradient-primary-text">
+                    {videos.reduce((acc, v) => acc + v.attempts.length, 0)}
+                  </p>
+                  <p className="text-[9px] text-white/35 uppercase tracking-widest mt-0.5">Quiz</p>
                 </div>
               </div>
             )}

@@ -1,6 +1,7 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { convertToModelMessages, streamText, UIMessage } from 'ai';
 import { getVectorStore } from '@/lib/pinecone';
+import { prisma } from '@/lib/db';
 
 // Autoriser le streaming de la réponse jusqu'à 30 secondes
 export const maxDuration = 30;
@@ -11,38 +12,51 @@ export async function POST(req: Request) {
 
     let context = '';
     let usingRAG = false;
+    
+    const userMessages = messages.filter((m) => m.role === 'user');
+    const latestUserMessage = userMessages[userMessages.length - 1];
+    const latestUserQuery = latestUserMessage?.parts
+      ? latestUserMessage.parts
+          .filter((part) => part.type === 'text')
+          .map((part) => part.text)
+          .join(' ')
+      : typeof (latestUserMessage as any)?.content === 'string' ? (latestUserMessage as any).content : '';
+
+    if (videoId && latestUserQuery) {
+      // Sauvegarder le message utilisateur
+      try {
+        await prisma.chatMessage.create({
+          data: {
+            videoId,
+            role: 'user',
+            content: latestUserQuery,
+          },
+        });
+      } catch (dbError) {
+        console.error("Erreur sauvegarde message user:", dbError);
+      }
+    }
 
     // Tentative de récupération contextuelle RAG via Pinecone
-    if (videoId) {
+    if (videoId && latestUserQuery) {
       try {
-        const userMessages = messages.filter((m) => m.role === 'user');
-        const latestUserMessage = userMessages[userMessages.length - 1];
-        const latestUserQuery = latestUserMessage?.parts
-          ? latestUserMessage.parts
-              .filter((part) => part.type === 'text')
-              .map((part) => part.text)
-              .join(' ')
-          : '';
-
-        if (latestUserQuery) {
-          const vectorStore = await getVectorStore(videoId);
-          const results = await vectorStore.similaritySearch(latestUserQuery, 5);
+        const vectorStore = await getVectorStore(videoId);
+        const results = await vectorStore.similaritySearch(latestUserQuery, 5);
+        
+        context = results.map((doc) => {
+          const startMs = doc.metadata?.start || 0;
+          // youtube-transcript renvoie l'offset en millisecondes. 
+          // Si la valeur est très grande (> 10000), on divise par 1000, sinon on suppose que c'est déjà en secondes.
+          const startSec = startMs > 10000 ? Math.floor(startMs / 1000) : Math.floor(startMs);
+          const mins = Math.floor(startSec / 60);
+          const secs = Math.floor(startSec % 60);
+          const timestampStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
           
-          context = results.map((doc) => {
-            const startMs = doc.metadata?.start || 0;
-            // youtube-transcript renvoie l'offset en millisecondes. 
-            // Si la valeur est très grande (> 10000), on divise par 1000, sinon on suppose que c'est déjà en secondes.
-            const startSec = startMs > 10000 ? Math.floor(startMs / 1000) : Math.floor(startMs);
-            const mins = Math.floor(startSec / 60);
-            const secs = Math.floor(startSec % 60);
-            const timestampStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            
-            return `[Timeline: ${timestampStr}]\n${doc.pageContent}`;
-          }).join('\n\n');
-          
-          usingRAG = true;
-          console.log(`[RAG] ${results.length} segments pertinents avec timelines récupérés pour la vidéo "${videoId}".`);
-        }
+          return `[Timeline: ${timestampStr}]\n${doc.pageContent}`;
+        }).join('\n\n');
+        
+        usingRAG = true;
+        console.log(`[RAG] ${results.length} segments pertinents avec timelines récupérés pour la vidéo "${videoId}".`);
       } catch (ragError) {
         console.warn("[RAG] Échec de la recherche vectorielle, repli sur la transcription complète :", ragError);
       }
@@ -75,6 +89,21 @@ Instructions impératives pour tes réponses :
       model: openrouter.chat('nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free'),
       system: systemPrompt,
       messages: await convertToModelMessages(messages),
+      async onFinish({ text }) {
+        if (videoId) {
+          try {
+            await prisma.chatMessage.create({
+              data: {
+                videoId,
+                role: 'assistant',
+                content: text,
+              },
+            });
+          } catch (dbError) {
+            console.error("Erreur sauvegarde message assistant:", dbError);
+          }
+        }
+      },
     });
 
     return result.toUIMessageStreamResponse();

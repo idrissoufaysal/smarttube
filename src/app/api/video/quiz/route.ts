@@ -29,6 +29,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'La transcription est requise' }, { status: 400 });
     }
 
+    const count = parseInt(numberOfQuestions, 10) || 5;
+
     // 1. Tenter de récupérer un quiz déjà généré depuis la base de données PostgreSQL
     if (videoId) {
       const cachedQuiz = await prisma.quiz.findFirst({
@@ -41,10 +43,11 @@ export async function POST(req: Request) {
         },
       });
 
-      if (cachedQuiz && cachedQuiz.questions.length > 0) {
-        console.log(`[Cache] Quiz pour la vidéo "${videoId}" (${difficulty}) récupéré depuis PostgreSQL.`);
+      if (cachedQuiz && cachedQuiz.questions.length === count) {
+        console.log(`[Cache] Quiz pour la vidéo "${videoId}" (${difficulty}, ${count} questions) récupéré depuis PostgreSQL.`);
         return NextResponse.json({
           quiz: {
+            id: cachedQuiz.id,
             questions: cachedQuiz.questions.map((q) => ({
               question: q.question,
               options: q.options,
@@ -86,16 +89,17 @@ ${transcript}
 </transcription>
 
 Instructions :
-- Génère exactement ${numberOfQuestions} questions.
+- Génère exactement ${count} questions.
 - Le niveau de difficulté doit être : ${difficulty}.
 - Les questions, options et explications doivent IMPÉRATIVEMENT être en français.
 - Ne pose pas de questions sur des choses qui ne sont pas dites dans la transcription.`,
     });
 
     // 4. Enregistrer le nouveau quiz dans la base de données PostgreSQL pour les prochaines requêtes
+    let savedQuizId = "";
     if (videoId) {
       try {
-        await prisma.quiz.create({
+        const createdQuiz = await prisma.quiz.create({
           data: {
             videoId: videoId,
             difficulty: difficulty,
@@ -109,13 +113,19 @@ Instructions :
             },
           },
         });
-        console.log(`[Database] Nouveau quiz enregistré pour la vidéo "${videoId}" (${difficulty}).`);
+        savedQuizId = createdQuiz.id;
+        console.log(`[Database] Nouveau quiz enregistré pour la vidéo "${videoId}" (${difficulty}, ID: ${savedQuizId}).`);
       } catch (dbError) {
         console.warn("[Database] Impossible d'enregistrer le quiz généré en cache :", dbError);
       }
     }
 
-    return NextResponse.json({ quiz: object });
+    return NextResponse.json({
+      quiz: {
+        id: savedQuizId || "temp-id-" + Date.now(),
+        questions: object.questions,
+      }
+    });
 
   } catch (error: any) {
     console.error('Erreur Génération Quiz:', error);
