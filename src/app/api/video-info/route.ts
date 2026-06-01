@@ -18,10 +18,11 @@ export async function POST(req: Request) {
     // 1. Tenter de récupérer la vidéo depuis le cache PostgreSQL
     const cachedVideo = await prisma.video.findUnique({
       where: { id: videoId },
+      include: { segments: { orderBy: { start: 'asc' } } },
     });
 
     if (cachedVideo) {
-      console.log(`[Cache] Métadonnées de la vidéo "${videoId}" récupérées depuis PostgreSQL.`);
+      console.log(`[Cache] Métadonnées, transcription et notes de la vidéo "${videoId}" récupérées depuis PostgreSQL.`);
       return Response.json({
         title: cachedVideo.title,
         description: cachedVideo.description || '',
@@ -30,6 +31,13 @@ export async function POST(req: Request) {
         viewCount: 0, // Optionnel, fallback
         publishDate: '', // Optionnel, fallback
         duration: cachedVideo.duration,
+        notes: cachedVideo.notes || null,
+        transcript: cachedVideo.transcript || '',
+        segments: cachedVideo.segments.map((s) => ({
+          text: s.text,
+          start: s.start,
+          duration: s.duration,
+        })),
       });
     }
 

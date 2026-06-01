@@ -9,9 +9,10 @@ import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/l
 export interface VideoPlayerProps {
   url: string;
   playerRef?: React.MutableRefObject<any>;
+  onTimeUpdate?: (time: number) => void;
 }
 
-export default function VideoPlayer({ url, playerRef }: VideoPlayerProps) {
+export default function VideoPlayer({ url, playerRef, onTimeUpdate }: VideoPlayerProps) {
   return (
     <MediaPlayer
       ref={playerRef}
@@ -23,6 +24,7 @@ export default function VideoPlayer({ url, playerRef }: VideoPlayerProps) {
       playsInline
       autoplay
       className="w-full h-full bg-black"
+      onTimeUpdate={(e: any) => onTimeUpdate?.(e.detail?.currentTime ?? e.currentTime)}
     >
       <MediaProvider />
       <DefaultVideoLayout icons={defaultLayoutIcons} />

@@ -1446,6 +1446,7 @@ export namespace Prisma {
     author: string | null
     duration: number | null
     transcript: string | null
+    notes: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1458,6 +1459,7 @@ export namespace Prisma {
     author: string | null
     duration: number | null
     transcript: string | null
+    notes: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1470,6 +1472,7 @@ export namespace Prisma {
     author: number
     duration: number
     transcript: number
+    notes: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -1492,6 +1495,7 @@ export namespace Prisma {
     author?: true
     duration?: true
     transcript?: true
+    notes?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1504,6 +1508,7 @@ export namespace Prisma {
     author?: true
     duration?: true
     transcript?: true
+    notes?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1516,6 +1521,7 @@ export namespace Prisma {
     author?: true
     duration?: true
     transcript?: true
+    notes?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1615,6 +1621,7 @@ export namespace Prisma {
     author: string | null
     duration: number
     transcript: string
+    notes: string | null
     createdAt: Date
     updatedAt: Date
     _count: VideoCountAggregateOutputType | null
@@ -1646,6 +1653,7 @@ export namespace Prisma {
     author?: boolean
     duration?: boolean
     transcript?: boolean
+    notes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     segments?: boolean | Video$segmentsArgs<ExtArgs>
@@ -1663,6 +1671,7 @@ export namespace Prisma {
     author?: boolean
     duration?: boolean
     transcript?: boolean
+    notes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["video"]>
@@ -1675,6 +1684,7 @@ export namespace Prisma {
     author?: boolean
     duration?: boolean
     transcript?: boolean
+    notes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["video"]>
@@ -1687,11 +1697,12 @@ export namespace Prisma {
     author?: boolean
     duration?: boolean
     transcript?: boolean
+    notes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type VideoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "thumbnail" | "author" | "duration" | "transcript" | "createdAt" | "updatedAt", ExtArgs["result"]["video"]>
+  export type VideoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "thumbnail" | "author" | "duration" | "transcript" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["video"]>
   export type VideoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     segments?: boolean | Video$segmentsArgs<ExtArgs>
     quizzes?: boolean | Video$quizzesArgs<ExtArgs>
@@ -1718,6 +1729,7 @@ export namespace Prisma {
       author: string | null
       duration: number
       transcript: string
+      notes: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["video"]>
@@ -2154,6 +2166,7 @@ export namespace Prisma {
     readonly author: FieldRef<"Video", 'String'>
     readonly duration: FieldRef<"Video", 'Int'>
     readonly transcript: FieldRef<"Video", 'String'>
+    readonly notes: FieldRef<"Video", 'String'>
     readonly createdAt: FieldRef<"Video", 'DateTime'>
     readonly updatedAt: FieldRef<"Video", 'DateTime'>
   }
@@ -8224,6 +8237,7 @@ export namespace Prisma {
     author: 'author',
     duration: 'duration',
     transcript: 'transcript',
+    notes: 'notes',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -8389,6 +8403,7 @@ export namespace Prisma {
     author?: StringNullableFilter<"Video"> | string | null
     duration?: IntFilter<"Video"> | number
     transcript?: StringFilter<"Video"> | string
+    notes?: StringNullableFilter<"Video"> | string | null
     createdAt?: DateTimeFilter<"Video"> | Date | string
     updatedAt?: DateTimeFilter<"Video"> | Date | string
     segments?: SegmentListRelationFilter
@@ -8405,6 +8420,7 @@ export namespace Prisma {
     author?: SortOrderInput | SortOrder
     duration?: SortOrder
     transcript?: SortOrder
+    notes?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     segments?: SegmentOrderByRelationAggregateInput
@@ -8424,6 +8440,7 @@ export namespace Prisma {
     author?: StringNullableFilter<"Video"> | string | null
     duration?: IntFilter<"Video"> | number
     transcript?: StringFilter<"Video"> | string
+    notes?: StringNullableFilter<"Video"> | string | null
     createdAt?: DateTimeFilter<"Video"> | Date | string
     updatedAt?: DateTimeFilter<"Video"> | Date | string
     segments?: SegmentListRelationFilter
@@ -8440,6 +8457,7 @@ export namespace Prisma {
     author?: SortOrderInput | SortOrder
     duration?: SortOrder
     transcript?: SortOrder
+    notes?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: VideoCountOrderByAggregateInput
@@ -8460,6 +8478,7 @@ export namespace Prisma {
     author?: StringNullableWithAggregatesFilter<"Video"> | string | null
     duration?: IntWithAggregatesFilter<"Video"> | number
     transcript?: StringWithAggregatesFilter<"Video"> | string
+    notes?: StringNullableWithAggregatesFilter<"Video"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Video"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Video"> | Date | string
   }
@@ -8782,6 +8801,7 @@ export namespace Prisma {
     author?: string | null
     duration: number
     transcript: string
+    notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     segments?: SegmentCreateNestedManyWithoutVideoInput
@@ -8798,6 +8818,7 @@ export namespace Prisma {
     author?: string | null
     duration: number
     transcript: string
+    notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     segments?: SegmentUncheckedCreateNestedManyWithoutVideoInput
@@ -8814,6 +8835,7 @@ export namespace Prisma {
     author?: NullableStringFieldUpdateOperationsInput | string | null
     duration?: IntFieldUpdateOperationsInput | number
     transcript?: StringFieldUpdateOperationsInput | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     segments?: SegmentUpdateManyWithoutVideoNestedInput
@@ -8830,6 +8852,7 @@ export namespace Prisma {
     author?: NullableStringFieldUpdateOperationsInput | string | null
     duration?: IntFieldUpdateOperationsInput | number
     transcript?: StringFieldUpdateOperationsInput | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     segments?: SegmentUncheckedUpdateManyWithoutVideoNestedInput
@@ -8846,6 +8869,7 @@ export namespace Prisma {
     author?: string | null
     duration: number
     transcript: string
+    notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -8858,6 +8882,7 @@ export namespace Prisma {
     author?: NullableStringFieldUpdateOperationsInput | string | null
     duration?: IntFieldUpdateOperationsInput | number
     transcript?: StringFieldUpdateOperationsInput | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -8870,6 +8895,7 @@ export namespace Prisma {
     author?: NullableStringFieldUpdateOperationsInput | string | null
     duration?: IntFieldUpdateOperationsInput | number
     transcript?: StringFieldUpdateOperationsInput | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -9289,6 +9315,7 @@ export namespace Prisma {
     author?: SortOrder
     duration?: SortOrder
     transcript?: SortOrder
+    notes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -9305,6 +9332,7 @@ export namespace Prisma {
     author?: SortOrder
     duration?: SortOrder
     transcript?: SortOrder
+    notes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -9317,6 +9345,7 @@ export namespace Prisma {
     author?: SortOrder
     duration?: SortOrder
     transcript?: SortOrder
+    notes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -10354,6 +10383,7 @@ export namespace Prisma {
     author?: string | null
     duration: number
     transcript: string
+    notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     quizzes?: QuizCreateNestedManyWithoutVideoInput
@@ -10369,6 +10399,7 @@ export namespace Prisma {
     author?: string | null
     duration: number
     transcript: string
+    notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     quizzes?: QuizUncheckedCreateNestedManyWithoutVideoInput
@@ -10400,6 +10431,7 @@ export namespace Prisma {
     author?: NullableStringFieldUpdateOperationsInput | string | null
     duration?: IntFieldUpdateOperationsInput | number
     transcript?: StringFieldUpdateOperationsInput | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     quizzes?: QuizUpdateManyWithoutVideoNestedInput
@@ -10415,6 +10447,7 @@ export namespace Prisma {
     author?: NullableStringFieldUpdateOperationsInput | string | null
     duration?: IntFieldUpdateOperationsInput | number
     transcript?: StringFieldUpdateOperationsInput | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     quizzes?: QuizUncheckedUpdateManyWithoutVideoNestedInput
@@ -10430,6 +10463,7 @@ export namespace Prisma {
     author?: string | null
     duration: number
     transcript: string
+    notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     segments?: SegmentCreateNestedManyWithoutVideoInput
@@ -10445,6 +10479,7 @@ export namespace Prisma {
     author?: string | null
     duration: number
     transcript: string
+    notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     segments?: SegmentUncheckedCreateNestedManyWithoutVideoInput
@@ -10532,6 +10567,7 @@ export namespace Prisma {
     author?: NullableStringFieldUpdateOperationsInput | string | null
     duration?: IntFieldUpdateOperationsInput | number
     transcript?: StringFieldUpdateOperationsInput | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     segments?: SegmentUpdateManyWithoutVideoNestedInput
@@ -10547,6 +10583,7 @@ export namespace Prisma {
     author?: NullableStringFieldUpdateOperationsInput | string | null
     duration?: IntFieldUpdateOperationsInput | number
     transcript?: StringFieldUpdateOperationsInput | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     segments?: SegmentUncheckedUpdateManyWithoutVideoNestedInput
@@ -10654,6 +10691,7 @@ export namespace Prisma {
     author?: string | null
     duration: number
     transcript: string
+    notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     segments?: SegmentCreateNestedManyWithoutVideoInput
@@ -10669,6 +10707,7 @@ export namespace Prisma {
     author?: string | null
     duration: number
     transcript: string
+    notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     segments?: SegmentUncheckedCreateNestedManyWithoutVideoInput
@@ -10721,6 +10760,7 @@ export namespace Prisma {
     author?: NullableStringFieldUpdateOperationsInput | string | null
     duration?: IntFieldUpdateOperationsInput | number
     transcript?: StringFieldUpdateOperationsInput | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     segments?: SegmentUpdateManyWithoutVideoNestedInput
@@ -10736,6 +10776,7 @@ export namespace Prisma {
     author?: NullableStringFieldUpdateOperationsInput | string | null
     duration?: IntFieldUpdateOperationsInput | number
     transcript?: StringFieldUpdateOperationsInput | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     segments?: SegmentUncheckedUpdateManyWithoutVideoNestedInput
@@ -10778,6 +10819,7 @@ export namespace Prisma {
     author?: string | null
     duration: number
     transcript: string
+    notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     segments?: SegmentCreateNestedManyWithoutVideoInput
@@ -10793,6 +10835,7 @@ export namespace Prisma {
     author?: string | null
     duration: number
     transcript: string
+    notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     segments?: SegmentUncheckedCreateNestedManyWithoutVideoInput
@@ -10824,6 +10867,7 @@ export namespace Prisma {
     author?: NullableStringFieldUpdateOperationsInput | string | null
     duration?: IntFieldUpdateOperationsInput | number
     transcript?: StringFieldUpdateOperationsInput | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     segments?: SegmentUpdateManyWithoutVideoNestedInput
@@ -10839,6 +10883,7 @@ export namespace Prisma {
     author?: NullableStringFieldUpdateOperationsInput | string | null
     duration?: IntFieldUpdateOperationsInput | number
     transcript?: StringFieldUpdateOperationsInput | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     segments?: SegmentUncheckedUpdateManyWithoutVideoNestedInput

@@ -128,6 +128,7 @@ exports.Prisma.VideoScalarFieldEnum = {
   author: 'author',
   duration: 'duration',
   transcript: 'transcript',
+  notes: 'notes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

@@ -15,6 +15,7 @@ model Video {
   author       String?
   duration     Int // in seconds
   transcript   String        @db.Text
+  notes        String?       @db.Text
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   segments     Segment[]
