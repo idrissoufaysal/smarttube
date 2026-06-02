@@ -81,22 +81,22 @@ function RevealSection({ children, className = "", delay = 0 }: { children: Reac
 
 /* ─── Data ─── */
 const FEATURES = [
-  { icon: <IconBrain />, title: "AI Insights", desc: "Deep analysis of complex topics, breaking them down into digestible blocks automatically.", color: "#93b7ff" },
-  { icon: <IconNotebook />, title: "Smart Notebook", desc: "Annotate videos in real-time. Export your summaries directly to Notion or Obsidian.mandddd", color: "#ffb8ac" },
-  { icon: <IconQuiz />, title: "Practice Mode", desc: "Challenge your knowledge with AI-generated quizzes tailored to the video content.", color: "#ffc78f" },
+  { icon: <IconBrain />, title: "Décryptage IA", desc: "Analyse approfondie de sujets complexes, divisés automatiquement en blocs faciles à assimiler.", color: "#93b7ff" },
+  { icon: <IconNotebook />, title: "Notes Intelligentes", desc: "Annotez les vidéos en temps réel et exportez vos résumés directement vers Notion ou Obsidian.", color: "#ffb8ac" },
+  { icon: <IconQuiz />, title: "Mode Quiz", desc: "Testez vos connaissances grâce à des quiz générés par l'IA et adaptés au contenu de la vidéo.", color: "#ffc78f" },
 ];
 
 const STEPS = [
-  { num: "01", title: "Paste a Link", desc: "Drop any YouTube URL into SmartTube. Our AI instantly begins processing the content." },
-  { num: "02", title: "Learn Actively", desc: "Get transcripts, key takeaways, and an AI assistant that answers questions about the video." },
-  { num: "03", title: "Master & Retain", desc: "Take AI-generated quizzes, review explanations, and track your mastery over time." },
+  { num: "01", title: "Collez un lien", desc: "Insérez n'importe quelle URL YouTube dans SmartTube. Notre IA commence instantanément à traiter le contenu." },
+  { num: "02", title: "Apprenez activement", desc: "Obtenez des transcriptions, des points clés et un assistant IA qui répond à toutes vos questions sur la vidéo." },
+  { num: "03", title: "Maîtrisez & Retenez", desc: "Faites des quiz générés par l'IA, passez en revue les explications et suivez votre progression au fil du temps." },
 ];
 
 const STATS = [
-  { value: "10K+", label: "Active Learners" },
-  { value: "2.4M", label: "Videos Analyzed" },
-  { value: "94%", label: "Retention Rate" },
-  { value: "4.9★", label: "User Rating" },
+  { value: "10K+", label: "Apprenants Actifs" },
+  { value: "2.4M", label: "Vidéos Analysées" },
+  { value: "94%", label: "Taux de Rétention" },
+  { value: "4.9★", label: "Note Utilisateurs" },
 ];
 
 /* ═══════════════════════════════════════════
@@ -171,13 +171,13 @@ export default function Home() {
             <div className="mx-auto max-w-4xl text-center">
               {/* Title */}
               <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter mb-6 leading-[1.1]">
-                Transform Any Video Into A <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-primary-container">Structured Lesson.</span>
+                Transformez toutes vidéos en une <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-primary-container">leçon structurée.</span>
               </h1>
 
               {/* Subtitle */}
               <p className="mx-auto mt-6 max-w-2xl animate-fade-up text-pretty text-base leading-relaxed text-white/55 md:text-lg" style={{ animationDelay: "100ms" }}>
-                Stop passive scrolling. Start active mastery. Paste a link to generate
-                transcripts, AI-powered notes, and personalized quizzes instantly.
+                Fini le visionnage passif. Place à l'apprentissage actif. Collez un lien pour générer
+                instantanément des transcriptions, des notes propulsées par l'IA et des quiz personnalisés.
               </p>
 
               {/* URL Input */}
@@ -185,7 +185,7 @@ export default function Home() {
                 <div className="h-15 bg-surface-container/50 backdrop-blur-lg p-2 rounded-lg border border-outline-variant/10 shadow-2xl flex flex-col md:flex-row gap-2">
                   <input
                     className="bg-transparent border-none focus:ring-0 w-full px-6 text-on-surface text-lg placeholder:text-neutral-600"
-                    placeholder="Paste a YouTube link..."
+                    placeholder="Collez un lien YouTube..."
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                   />
@@ -200,10 +200,10 @@ export default function Home() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
-                        Extracting...
+                        Extraction...
                       </span>
                     ) : (
-                      "Start Learning"
+                      "Commencer "
                     )}
                   </button>
                 </div>
@@ -221,8 +221,8 @@ export default function Home() {
           <div className="mx-auto max-w-6xl px-5 md:px-8">
             <RevealSection>
               <div className="mb-12 text-center">
-                <p className="text-label text-[#ffb4a8]">Core Features</p>
-                <h2 className="mt-3 text-headline text-white">Your AI-Powered Study Toolkit</h2>
+                <p className="text-label text-[#ffb4a8]">Fonctionnalités clés</p>
+                <h2 className="mt-3 text-headline text-white">Votre boîte à outils d'apprentissage propulsée par l'IA</h2>
               </div>
             </RevealSection>
 
@@ -263,7 +263,7 @@ export default function Home() {
                         <span className="h-2.5 w-2.5 rounded-full bg-[#ff5540]/60" />
                         <span className="h-2.5 w-2.5 rounded-full bg-[#ffc78f]/40" />
                         <span className="h-2.5 w-2.5 rounded-full bg-[#93b7ff]/40" />
-                        <span className="ml-3 text-[10px] text-white/25">SmartTube — Study Session</span>
+                        <span className="ml-3 text-[10px] text-white/25">SmartTube — Session d'étude</span>
                       </div>
                       {/* Content */}
                       <div className="flex gap-0">
@@ -296,12 +296,12 @@ export default function Home() {
 
                   {/* Text overlay */}
                   <div className="absolute bottom-8 left-7 md:left-10">
-                    <h3 className="text-3xl font-bold text-white md:text-4xl">Designed for Mastery.</h3>
-                    <p className="mt-2 text-sm text-white/55">The Digital Scholar&apos;s Command Center.</p>
+                    <h3 className="text-3xl font-bold text-white md:text-4xl">Conçu pour la maîtrise.</h3>
+                    <p className="mt-2 text-sm text-white/55">Le centre de commandement de l'étudiant moderne.</p>
                   </div>
                   <div className="absolute bottom-8 right-7 flex gap-2 md:right-10">
-                    <span className="rounded-full bg-white/5 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.1em] text-white/50">OLED Optimized</span>
-                    <span className="rounded-full bg-white/5 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.1em] text-white/50">Ad-free Player</span>
+                    <span className="rounded-full bg-white/5 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.1em] text-white/50">Optimisé OLED</span>
+                    <span className="rounded-full bg-white/5 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.1em] text-white/50">Lecteur sans publicité</span>
                   </div>
                 </div>
               </div>
@@ -314,8 +314,8 @@ export default function Home() {
           <div className="mx-auto max-w-6xl px-5 md:px-8">
             <RevealSection>
               <div className="mb-16 text-center">
-                <p className="text-label text-[#acc7ff]">How It Works</p>
-                <h2 className="mt-3 text-headline text-white">Three Steps to Mastery</h2>
+                <p className="text-label text-[#acc7ff]">Comment ça marche</p>
+                <h2 className="mt-3 text-headline text-white">Trois étapes vers la maîtrise</h2>
               </div>
             </RevealSection>
 
@@ -359,16 +359,16 @@ export default function Home() {
             <RevealSection>
               <div className="relative mx-auto max-w-3xl text-center">
                 <h2 className="text-headline md:text-4xl text-white">
-                  Ready to Learn <span className="gradient-primary-text">Smarter?</span>
+                  Prêt à apprendre plus <span className="gradient-primary-text">intelligemment ?</span>
                 </h2>
                 <p className="mx-auto mt-5 max-w-xl text-base text-white/50">
-                  Join thousands of students who have transformed their study habits with SmartTube.
+                  Rejoignez des milliers d'étudiants qui ont transformé leurs habitudes d'étude avec SmartTube.
                 </p>
                 <a
                   href="#hero-input"
                   className="mt-8 inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold gradient-primary text-[#2b140f] shadow-[0_8px_32px_rgba(255,85,64,0.25)] transition-all duration-200 hover:shadow-[0_16px_48px_rgba(255,85,64,0.3)] hover:scale-[1.03] active:scale-[0.98]"
                 >
-                  Start Learning — It&apos;s Free
+                  Commencer à apprendre — C'est gratuit
                   <IconArrow />
                 </a>
               </div>
@@ -388,12 +388,12 @@ export default function Home() {
               <span className="text-sm font-black tracking-tight text-[#ff8f87]">SMARTTUBE</span>
             </div>
             <p className="mt-2 text-xs text-white/35">
-              © {new Date().getFullYear()} Study Sanctuary Inc. All rights reserved.
+              © {new Date().getFullYear()} Study Sanctuary Inc. Tous droits réservés.
             </p>
           </div>
           <nav className="flex items-center gap-6 text-sm text-white/45">
-            <a href="#" className="transition-colors hover:text-white/75">Privacy</a>
-            <a href="#" className="transition-colors hover:text-white/75">Terms</a>
+            <a href="#" className="transition-colors hover:text-white/75">Confidentialité</a>
+            <a href="#" className="transition-colors hover:text-white/75">Conditions d'utilisation</a>
             <a href="#" className="transition-colors hover:text-white/75">Contact</a>
           </nav>
           <div className="flex gap-2">
