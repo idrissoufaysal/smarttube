@@ -22,24 +22,24 @@ export function StudyRightPanel({
   handleTimelineClick,
 }: StudyRightPanelProps) {
   return (
-    <div className="space-y-6 sticky top-20 h-[calc(100vh-90px)] flex flex-col">
-      <div className="border-b border-[#353534] flex gap-0 shrink-0">
+    <div className="w-[450px] bg-surface-low border-l border-outline-variant/10 flex flex-col shrink-0 h-full overflow-hidden">
+      <div className="border-b border-outline-variant/10 bg-surface-container-low flex gap-0 shrink-0">
         <button
           onClick={() => setActiveTab('ai')}
-          className={`flex-1 py-4 text-sm font-semibold border-b-2 transition ${
+          className={`flex-1 py-5 text-sm font-bold border-b-2 transition tracking-tight cursor-pointer ${
             activeTab === 'ai'
-              ? 'text-[#ffb4a8] border-[#ffb4a8]'
-              : 'text-[#603e39] border-transparent hover:text-[#ebbbb4]'
+              ? 'text-primary border-primary'
+              : 'text-on-surface-variant border-transparent hover:text-on-surface'
           }`}
         >
           AI Assistant
         </button>
         <button
           onClick={() => setActiveTab('practice')}
-          className={`flex-1 py-4 text-sm font-semibold border-b-2 transition ${
+          className={`flex-1 py-5 text-sm font-bold border-b-2 transition tracking-tight cursor-pointer ${
             activeTab === 'practice'
-              ? 'text-[#ffb4a8] border-[#ffb4a8]'
-              : 'text-[#603e39] border-transparent hover:text-[#ebbbb4]'
+              ? 'text-primary border-primary'
+              : 'text-on-surface-variant border-transparent hover:text-on-surface'
           }`}
         >
           Practice Questions

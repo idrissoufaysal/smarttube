@@ -3,16 +3,21 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import type { MediaPlayerInstance } from '@vidstack/react';
-import { 
-  Search, 
-  BookOpen, 
-  Download, 
-  Copy, 
-  Check, 
-  Sparkles, 
-  RefreshCw, 
-  FileText 
+import {
+  Search,
+  BookOpen,
+  Download,
+  Copy,
+  Check,
+  BrainCircuit,
+  RefreshCw,
+  FileText,
+  Clock,
+  Trophy,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { SegmentItem, VideoInfo } from './types';
 
 const VideoPlayer = dynamic(() => import('@/components/video-player'), { ssr: false });
@@ -71,294 +76,374 @@ export function StudyLeftPanel({
   handleGenerateNotes,
 }: StudyLeftPanelProps) {
 
-  // Rendu Markdown ultra-basique sécurisé pour l'affichage des notes
+  /* ── Markdown renderer ─────────────────────── */
   const parseMarkdown = (text: string) => {
-    const renderInlineStyles = (lineText: string) => {
-      const parts = lineText.split(/\*\*([^*]+)\*\*/g);
-      return parts.map((part, idx) => {
-        if (idx % 2 === 1) {
-          return <strong key={idx} className="font-extrabold text-[#ffb4a8]">{part}</strong>;
-        }
-        return part;
-      });
-    };
+    const bold = (lineText: string) =>
+      lineText.split(/\*\*([^*]+)\*\*/g).map((part, idx) =>
+        idx % 2 === 1
+          ? <strong key={idx} className="font-bold text-primary">{part}</strong>
+          : part
+      );
 
     return text.split('\n').map((line, idx) => {
-      const content = line.trim();
-      if (!content) return <div key={idx} className="h-2" />;
-
-      if (content.startsWith('### ')) {
-        return <h4 key={idx} className="text-base font-bold text-white mt-4 mb-2">{renderInlineStyles(content.replace('### ', ''))}</h4>;
-      }
-      if (content.startsWith('## ')) {
-        return <h3 key={idx} className="text-lg font-bold text-[#ffb4a8] mt-5 mb-2">{renderInlineStyles(content.replace('## ', ''))}</h3>;
-      }
-      if (content.startsWith('# ')) {
-        return <h2 key={idx} className="text-xl font-bold text-white mt-6 mb-3">{renderInlineStyles(content.replace('# ', ''))}</h2>;
-      }
-
-      if (content.startsWith('- ') || content.startsWith('* ')) {
-        const cleanText = content.substring(2);
-        return (
-          <li key={idx} className="list-disc ml-5 text-sm text-[#ebbbb4] mb-1">
-            {renderInlineStyles(cleanText)}
-          </li>
-        );
-      }
-
-      return (
-        <p key={idx} className="text-sm text-[#ebbbb4] mb-3 leading-relaxed">
-          {renderInlineStyles(content)}
-        </p>
-      );
+      const c = line.trim();
+      if (!c) return <div key={idx} className="h-3" />;
+      if (c.startsWith('# '))  return <h2 key={idx} className="text-xl font-bold text-on-surface mt-6 mb-2 tracking-tight">{bold(c.replace('# ', ''))}</h2>;
+      if (c.startsWith('## ')) return <h3 key={idx} className="text-base font-bold text-primary mt-5 mb-1.5">{bold(c.replace('## ', ''))}</h3>;
+      if (c.startsWith('### ')) return <h4 key={idx} className="text-sm font-semibold text-on-surface mt-4 mb-1">{bold(c.replace('### ', ''))}</h4>;
+      if (c.startsWith('- ') || c.startsWith('* '))
+        return <li key={idx} className="ml-4 list-disc text-sm text-on-surface-variant leading-relaxed mb-1">{bold(c.substring(2))}</li>;
+      return <p key={idx} className="text-sm text-on-surface-variant leading-relaxed mb-2.5">{bold(c)}</p>;
     });
   };
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  /* ── Render ───────────────────────────────── */
   return (
-    <div className="col-span-2 space-y-6">
-      {/* Lecteur Vidéo */}
-      <div className="bg-[#0e0e0e] rounded-lg overflow-hidden aspect-video relative">
-        {url && isMounted ? (
-          <div className="absolute inset-0 w-full h-full">
-            <VideoPlayer
-              playerRef={playerRef}
-              url={url}
-              onTimeUpdate={onTimeUpdate}
-            />
-          </div>
-        ) : (
-          <div className="absolute inset-0 bg-linear-to-br from-[#2a5a8a] to-[#0e0e0e] opacity-20" />
-        )}
-      </div>
+    <div className="flex-1 overflow-y-auto bg-background h-full scrollbar-thin scrollbar-thumb-surface-highest/40 scrollbar-track-transparent">
+      <div className="max-w-3xl mx-auto px-6 py-8 space-y-8">
 
-      {/* Titre et Badges */}
-      <div>
-        <h1 className="text-3xl font-bold text-white mb-3">
-          {videoInfo?.title || 'Vidéo en cours de chargement...'}
-        </h1>
-        <div className="flex items-center gap-4 text-sm text-[#ebbbb4]">
-          <span> {new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-          <div className="flex gap-2 items-center">
-            <span className="bg-[#353534] text-[#ffb4a8] px-3 py-1 rounded text-xs font-semibold">AI/ML</span>
-            {maxScore && (
-              <span className="bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-0.5 rounded-md text-xs font-extrabold flex items-center gap-1 animate-fade-in">
-                🏆 Score Max: {maxScore}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Module d'onglets dynamique sous la vidéo */}
-      <div className="bg-[#201f1f] rounded-xl border border-[#353534] overflow-hidden shadow-xl">
-        {/* Barre d'onglets */}
-        <div className="flex border-b border-[#353534] bg-[#1a1919] p-2 gap-2">
-          <button
-            onClick={() => setStudyTab('transcript')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-              studyTab === 'transcript'
-                ? 'bg-[#ffb4a8]/10 text-[#ffb4a8] border border-[#ffb4a8]/25'
-                : 'text-[#ebbbb4]/40 hover:text-[#ebbbb4]/80 hover:bg-white/5 border border-transparent'
-            }`}
-          >
-            <FileText className="h-4 w-4" />
-            Transcription
-          </button>
-          <button
-            onClick={() => setStudyTab('notes')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-              studyTab === 'notes'
-                ? 'bg-[#ffb4a8]/10 text-[#ffb4a8] border border-[#ffb4a8]/25'
-                : 'text-[#ebbbb4]/40 hover:text-[#ebbbb4]/80 hover:bg-white/5 border border-transparent'
-            }`}
-          >
-            <Sparkles className="h-4 w-4 text-[#ffb4a8]" />
-            Notes de cours (IA)
-          </button>
-        </div>
-
-        {/* Contenu des onglets */}
-        <div className="p-6">
-          {studyTab === 'transcript' ? (
-            // Onglet Transcription
-            <div className="space-y-4">
-              {/* Actions de la transcription */}
-              <div className="flex items-center justify-between gap-4 flex-wrap border-b border-[#353534]/40 pb-3">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#ebbbb4]/40" />
-                  <input
-                    type="text"
-                    placeholder="Rechercher des mots-clés dans la transcription..."
-                    className="w-full bg-[#181717] border border-[#353534] rounded-lg pl-11 pr-4 py-2.5 text-sm text-[#ebbbb4] placeholder:text-[#ebbbb4]/30 focus:outline-none focus:border-[#ffb4a8]/50 transition-colors"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setShowTimestamps(!showTimestamps)}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
-                      showTimestamps
-                        ? 'bg-[#ffb4a8]/10 text-[#ffb4a8] border-[#ffb4a8]/20'
-                        : 'bg-[#181717] text-[#ebbbb4]/80 border-[#353534] hover:bg-[#ffb4a8]/10 hover:text-[#ffb4a8]'
-                    }`}
-                    title={showTimestamps ? "Masquer les timestamps" : "Afficher les timestamps"}
-                  >
-                    ⏱️ Timestamps
-                  </button>
-                  <button
-                    onClick={handleExportTranscriptPDF}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-[#ffb4a8] text-[#603e39] hover:brightness-110 transition-all shadow-md shadow-[#ffb4a8]/10"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    Exporter en PDF
-                  </button>
-                </div>
-              </div>
-
-              <div className="max-h-[350px] overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                {filteredSegments.length > 0 ? (
-                  filteredSegments.map((seg, idx) => {
-                    const isActive =
-                      currentTime >= seg.start &&
-                      currentTime < seg.start + (seg.duration || 5);
-                    return (
-                      <div
-                        key={idx}
-                        ref={isActive ? activeSegmentRef : null}
-                        className={`flex gap-4 p-3 rounded-lg transition-all border ${
-                          isActive
-                            ? 'bg-[#ffb4a8]/10 border-[#ffb4a8]/20 shadow-md shadow-primary/5'
-                            : 'bg-transparent border-transparent hover:bg-[#181717]/50'
-                        }`}
-                      >
-                        {showTimestamps && (
-                          <button
-                            onClick={() => handleTimelineClick(seg.start)}
-                            className={`h-fit px-2.5 py-1 rounded-md text-xs font-bold font-mono transition-colors shrink-0 ${
-                              isActive
-                                ? 'bg-[#ffb4a8] text-[#603e39] shadow-lg shadow-[#ffb4a8]/20'
-                                : 'bg-[#181717] text-[#ffb4a8] hover:bg-[#ffb4a8]/25 hover:text-[#ffb4a8]'
-                            }`}
-                          >
-                            {formatTime(seg.start)}
-                          </button>
-                        )}
-                        <p
-                          onClick={() => handleTimelineClick(seg.start)}
-                          className={`text-sm cursor-pointer transition-colors leading-relaxed flex-1 ${
-                            isActive ? 'text-white font-medium' : 'text-[#ebbbb4]/80 hover:text-white'
-                          }`}
-                        >
-                          {seg.text}
-                        </p>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="text-center text-sm text-[#ebbbb4]/40 py-8">Aucun segment ne correspond à votre recherche.</p>
-                )}
-              </div>
+        {/* ── VIDEO PLAYER ── */}
+        <div className="rounded-2xl overflow-hidden bg-black aspect-video relative shadow-2xl shadow-black/60 ring-1 ring-white/[0.04]">
+          {url && isMounted ? (
+            <div className="absolute inset-0">
+              <VideoPlayer playerRef={playerRef} url={url} onTimeUpdate={onTimeUpdate} />
             </div>
           ) : (
-            // Onglet Notes
-            <div className="space-y-4">
-              {isGenerating ? (
-                // Écran de chargement exclusif durant la génération
-                <div className="flex flex-col items-center justify-center py-12 px-6 bg-[#181717] rounded-xl border border-[#353534]/50 space-y-4 animate-fade-in">
-                  <div className="h-16 w-16 rounded-full bg-[#ffb4a8]/10 border border-[#ffb4a8]/25 flex items-center justify-center animate-spin">
-                    <RefreshCw className="h-8 w-8 text-[#ffb4a8]" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white">Génération en cours...</h3>
-                  <p className="text-sm text-center text-[#ebbbb4]/60 max-w-sm">
-                    L'IA analyse le cours et structure votre synthèse. Veuillez patienter un instant.
-                  </p>
-                  <div className="h-1.5 w-full max-w-md bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#ffb4a8] rounded-full animate-pulse" style={{ width: '75%' }} />
-                  </div>
-                </div>
-              ) : notes ? (
-                // Affichage des notes terminées
-                <div className="space-y-4 animate-fade-in">
-                  <div className="flex items-center justify-between border-b border-[#353534] pb-3 flex-wrap gap-2">
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="h-5 w-5 text-[#ffb4a8]" />
-                      <span className="text-sm font-semibold text-white">Synthèse et concepts clés de la vidéo</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={handleCopyNotes}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#181717] text-[#ebbbb4]/80 hover:bg-[#ffb4a8]/10 hover:text-[#ffb4a8] transition-all border border-[#353534]"
-                      >
-                        {copied ? (
-                          <>
-                            <Check className="h-3.5 w-3.5 text-green-400" />
-                            Copié !
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="h-3.5 w-3.5" />
-                            Copier
-                          </>
-                        )}
-                      </button>
-                      <button
-                        onClick={handleExportNotesPDF}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#ffb4a8] text-[#603e39] hover:brightness-110 transition-all shadow-md shadow-[#ffb4a8]/10"
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                        Exporter en PDF
-                      </button>
-                      <button
-                        onClick={handleExportNotes}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#181717] text-[#ebbbb4]/80 hover:bg-[#ffb4a8]/10 hover:text-[#ffb4a8] transition-all border border-[#353534]"
-                      >
-                        Exporter (.md)
-                      </button>
-                      <button
-                        onClick={() => handleGenerateNotes(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#181717] text-[#ebbbb4]/80 hover:bg-[#ffb4a8]/10 hover:text-[#ffb4a8] transition-all border border-[#353534]"
-                      >
-                        <RefreshCw className="h-3.5 w-3.5" />
-                        Régénérer
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Contenu des notes */}
-                  <div className="max-h-[400px] overflow-y-auto pr-2 text-[#ebbbb4] prose prose-invert max-w-none">
-                    {parseMarkdown(notes)}
-                  </div>
-                </div>
-              ) : (
-                // Écran d'accueil de génération
-                <div className="flex flex-col items-center justify-center py-12 px-6 bg-[#181717] rounded-xl border border-[#353534]/50">
-                  <div className="h-16 w-16 rounded-full bg-[#ffb4a8]/10 border border-[#ffb4a8]/20 flex items-center justify-center mb-4">
-                    <Sparkles className="h-8 w-8 text-[#ffb4a8]" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Générateur de Notes de Cours IA</h3>
-                  <p className="text-sm text-center text-[#ebbbb4]/60 max-w-md mb-6 leading-relaxed">
-                    Laissez notre IA analyser la transcription de cette vidéo pour rédiger automatiquement une synthèse structurée, claire et exploitable pour vos révisions.
-                  </p>
-                  <button
-                    onClick={() => handleGenerateNotes(false)}
-                    className="flex items-center gap-2 bg-[#ffb4a8] text-[#603e39] px-6 py-3 rounded-lg font-bold hover:brightness-110 transition-all shadow-lg shadow-[#ffb4a8]/10"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Générer les notes
-                  </button>
-                </div>
-              )}
+            <div className="absolute inset-0 bg-gradient-to-br from-surface-high to-surface-dim flex items-center justify-center">
+              <div className="text-on-surface/10 text-5xl">▶</div>
             </div>
           )}
         </div>
+
+        {/* ── VIDEO META ── */}
+        <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <h1 className="text-2xl font-bold text-on-surface leading-tight tracking-tight">
+            {videoInfo?.title || 'Chargement de la vidéo…'}
+          </h1>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-xs text-on-surface/35 font-medium">
+              {new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </span>
+            <span className="w-1 h-1 rounded-full bg-on-surface/15" />
+            <Badge variant="outline" className="text-[10px] border-primary/20 bg-primary/5 text-primary font-bold px-2 py-0.5">
+              AI / ML
+            </Badge>
+            {maxScore && (
+              <Badge variant="outline" className="text-[10px] border-green-500/25 bg-green-500/8 text-green-400 font-bold gap-1 px-2 py-0.5 animate-in fade-in duration-300">
+                <Trophy className="w-2.5 h-2.5" />
+                Score Max: {maxScore}
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        {/* ── TABS CARD ── */}
+        <div className="rounded-2xl border border-white/[0.05] bg-surface-dim/80 backdrop-blur-sm overflow-hidden shadow-xl shadow-black/20 animate-in fade-in slide-in-from-bottom-3 duration-600">
+
+          {/* Tab switcher */}
+          <div className="flex items-center border-b border-white/[0.05] bg-surface-low/50 px-4 pt-3 gap-1">
+            <TabButton
+              active={studyTab === 'transcript'}
+              icon={<FileText className="w-3.5 h-3.5" />}
+              label="Transcription"
+              onClick={() => setStudyTab('transcript')}
+            />
+            <TabButton
+              active={studyTab === 'notes'}
+              icon={<BrainCircuit className="w-3.5 h-3.5" />}
+              label="Notes de cours"
+              onClick={() => setStudyTab('notes')}
+              highlight
+            />
+          </div>
+
+          {/* Tab content */}
+          <div className="p-5">
+            {studyTab === 'transcript' ? (
+              <TranscriptTab
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                showTimestamps={showTimestamps}
+                setShowTimestamps={setShowTimestamps}
+                filteredSegments={filteredSegments}
+                currentTime={currentTime}
+                activeSegmentRef={activeSegmentRef}
+                handleTimelineClick={handleTimelineClick}
+                handleExportTranscriptPDF={handleExportTranscriptPDF}
+                formatTime={formatTime}
+              />
+            ) : (
+              <NotesTab
+                isGenerating={isGenerating}
+                notes={notes}
+                copied={copied}
+                handleCopyNotes={handleCopyNotes}
+                handleExportNotesPDF={handleExportNotesPDF}
+                handleExportNotes={handleExportNotes}
+                handleGenerateNotes={handleGenerateNotes}
+                parseMarkdown={parseMarkdown}
+              />
+            )}
+          </div>
+        </div>
+
       </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════
+   Sub-components
+   ════════════════════════════════════════════ */
+
+function TabButton({
+  active, icon, label, onClick, highlight,
+}: {
+  active: boolean; icon: React.ReactNode; label: string;
+  onClick: () => void; highlight?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'flex items-center gap-2 px-4 py-2.5 rounded-t-lg text-xs font-semibold transition-all duration-200 border-b-2 -mb-px relative',
+        active
+          ? 'text-primary border-primary bg-primary/5'
+          : 'text-on-surface/35 border-transparent hover:text-on-surface/60 hover:bg-white/[0.03]',
+        highlight && !active && 'text-primary/50'
+      )}
+    >
+      <span className={cn('transition-colors', active ? 'text-primary' : 'text-on-surface/30', highlight && !active && 'text-primary/40')}>
+        {icon}
+      </span>
+      {label}
+    </button>
+  );
+}
+
+/* ── Transcript Tab ── */
+function TranscriptTab({
+  searchTerm, setSearchTerm, showTimestamps, setShowTimestamps,
+  filteredSegments, currentTime, activeSegmentRef, handleTimelineClick,
+  handleExportTranscriptPDF, formatTime,
+}: {
+  searchTerm: string; setSearchTerm: (v: string) => void;
+  showTimestamps: boolean; setShowTimestamps: (v: boolean) => void;
+  filteredSegments: SegmentItem[]; currentTime: number;
+  activeSegmentRef: React.RefObject<HTMLDivElement | null>;
+  handleTimelineClick: (s: number) => void;
+  handleExportTranscriptPDF: () => void;
+  formatTime: (s: number) => string;
+}) {
+  return (
+    <div className="space-y-4 animate-in fade-in duration-200">
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* Search */}
+        <div className="relative flex-1 min-w-[180px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-on-surface/25 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Rechercher dans la transcription…"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full bg-surface-container/50 border border-white/[0.06] rounded-xl pl-9 pr-4 py-2 text-xs text-on-surface placeholder:text-on-surface/25 focus:outline-none focus:border-primary/30 focus:bg-surface-container transition-all"
+          />
+        </div>
+
+        {/* Timestamp toggle */}
+        <button
+          onClick={() => setShowTimestamps(!showTimestamps)}
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all border shrink-0',
+            showTimestamps
+              ? 'bg-primary/10 border-primary/25 text-primary'
+              : 'bg-white/[0.03] border-white/[0.06] text-on-surface/40 hover:text-on-surface/70'
+          )}
+        >
+          <Clock className="w-3 h-3" />
+          Horodatage
+        </button>
+
+        {/* Export */}
+        <Button
+          size="sm"
+          onClick={handleExportTranscriptPDF}
+          className="h-8 text-xs font-semibold bg-primary text-on-primary rounded-xl gap-1.5 px-3 hover:brightness-105 shadow-sm shadow-primary/20 shrink-0"
+        >
+          <Download className="w-3 h-3" />
+          PDF
+        </Button>
+      </div>
+
+      {/* Segments list */}
+      <div className="max-h-[380px] overflow-y-auto space-y-0.5 pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+        {filteredSegments.length > 0 ? (
+          filteredSegments.map((seg, idx) => {
+            const isActive = currentTime >= seg.start && currentTime < seg.start + (seg.duration || 5);
+            return (
+              <div
+                key={idx}
+                ref={isActive ? activeSegmentRef : null}
+                className={cn(
+                  'flex gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer group',
+                  isActive
+                    ? 'bg-primary/8 ring-1 ring-primary/15'
+                    : 'hover:bg-white/[0.025]'
+                )}
+                onClick={() => handleTimelineClick(seg.start)}
+              >
+                {showTimestamps && (
+                  <span className={cn(
+                    'shrink-0 font-mono text-[10px] font-bold mt-0.5 px-1.5 py-0.5 rounded-md tabular-nums leading-none',
+                    isActive
+                      ? 'bg-primary text-on-primary'
+                      : 'text-primary/60 bg-primary/8 group-hover:bg-primary/15'
+                  )}>
+                    {formatTime(seg.start)}
+                  </span>
+                )}
+                <p className={cn(
+                  'text-xs leading-relaxed flex-1 transition-colors',
+                  isActive ? 'text-on-surface font-medium' : 'text-on-surface/55 group-hover:text-on-surface/80'
+                )}>
+                  {seg.text}
+                </p>
+              </div>
+            );
+          })
+        ) : (
+          <div className="py-12 text-center">
+            <p className="text-xs text-on-surface/25">Aucun résultat pour cette recherche.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Notes Tab ── */
+function NotesTab({
+  isGenerating, notes, copied,
+  handleCopyNotes, handleExportNotesPDF, handleExportNotes,
+  handleGenerateNotes, parseMarkdown,
+}: {
+  isGenerating: boolean; notes: string | null; copied: boolean;
+  handleCopyNotes: () => void; handleExportNotesPDF: () => void;
+  handleExportNotes: () => void;
+  handleGenerateNotes: (force?: boolean) => void;
+  parseMarkdown: (text: string) => React.ReactNode;
+}) {
+  if (isGenerating) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-6 animate-in fade-in duration-300">
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary/15 blur-2xl rounded-full scale-150 animate-pulse" />
+          <div className="relative w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <RefreshCw className="w-6 h-6 text-primary animate-spin" style={{ animationDuration: '2s' }} />
+          </div>
+        </div>
+        <div className="text-center space-y-1.5">
+          <p className="text-sm font-semibold text-on-surface">Génération des notes…</p>
+          <p className="text-xs text-on-surface/40 max-w-[260px] leading-relaxed">
+            L'IA analyse la transcription et structure votre synthèse.
+          </p>
+        </div>
+        <div className="w-48 h-1 bg-white/5 rounded-full overflow-hidden">
+          <div className="h-full bg-primary rounded-full animate-pulse" style={{ width: '70%' }} />
+        </div>
+      </div>
+    );
+  }
+
+  if (notes) {
+    return (
+      <div className="space-y-4 animate-in fade-in duration-200">
+        {/* Action bar */}
+        <div className="flex items-center justify-between gap-3 flex-wrap pb-4 border-b border-white/[0.05]">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-primary/70" />
+            <span className="text-xs font-semibold text-on-surface/70">Synthèse de la vidéo</span>
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopyNotes}
+              className={cn(
+                'h-7 text-xs gap-1.5 rounded-lg px-2.5 border border-white/[0.06]',
+                copied ? 'text-green-400 border-green-500/20 bg-green-500/5' : 'text-on-surface/50 hover:text-on-surface hover:bg-white/[0.04]'
+              )}
+            >
+              {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              {copied ? 'Copié' : 'Copier'}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleExportNotes}
+              className="h-7 text-xs gap-1.5 rounded-lg px-2.5 border border-white/[0.06] text-on-surface/50 hover:text-on-surface hover:bg-white/[0.04]"
+            >
+              Markdown
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleExportNotesPDF}
+              className="h-7 text-xs font-semibold bg-primary text-on-primary rounded-lg gap-1 px-2.5 hover:brightness-105 shadow-sm shadow-primary/20"
+            >
+              <Download className="w-3 h-3" />
+              PDF
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleGenerateNotes(true)}
+              className="h-7 text-xs gap-1.5 rounded-lg px-2.5 border border-white/[0.06] text-on-surface/40 hover:text-on-surface/70"
+            >
+              <RefreshCw className="w-3 h-3" />
+              Régénérer
+            </Button>
+          </div>
+        </div>
+
+        {/* Notes content */}
+        <div className="max-h-[450px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+          <div className="prose-sm space-y-0.5">
+            {parseMarkdown(notes)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state
+  return (
+    <div className="flex flex-col items-center justify-center py-16 gap-6 animate-in fade-in duration-300">
+      <div className="relative">
+        <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-[2]" />
+        <div className="relative w-16 h-16 rounded-2xl bg-primary/8 border border-primary/15 flex items-center justify-center">
+          <BrainCircuit className="w-6 h-6 text-primary/80" />
+        </div>
+      </div>
+      <div className="text-center space-y-2">
+        <p className="text-sm font-semibold text-on-surface">Notes de cours IA</p>
+        <p className="text-xs text-on-surface/40 max-w-[280px] leading-relaxed">
+          L'IA analyse la transcription et rédige une synthèse structurée, claire et exploitable pour vos révisions.
+        </p>
+      </div>
+      <Button
+        onClick={() => handleGenerateNotes(false)}
+        className="gap-2 bg-primary text-on-primary font-semibold rounded-xl px-6 h-10 text-sm hover:brightness-105 shadow-lg shadow-primary/15"
+      >
+        <BrainCircuit className="w-4 h-4" />
+        Générer les notes
+      </Button>
     </div>
   );
 }

@@ -2,18 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { 
-  BrainCircuit, 
-  CheckCircle2, 
-  XCircle, 
-  ArrowRight, 
-  RefreshCcw, 
-  Loader2, 
-  Trophy, 
-  Sparkles, 
-  History, 
-  ChevronRight 
+import {
+  BrainCircuit,
+  CheckCircle2,
+  XCircle,
+  ArrowRight,
+  RefreshCcw,
+  Loader2,
+  Trophy,
+  Sparkles,
+  History,
+  Zap,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 
 interface QuizQuestion {
   question: string;
@@ -35,50 +39,59 @@ interface QuizInterfaceProps {
   videoId?: string;
 }
 
+/* ── Difficulty config ─────────────────────── */
+const DIFF_CONFIG = {
+  facile:    { label: 'Facile',    dot: 'bg-emerald-400', ring: 'border-emerald-500/40 bg-emerald-500/8 text-emerald-400' },
+  moyen:     { label: 'Moyen',     dot: 'bg-amber-400',   ring: 'border-amber-500/40  bg-amber-500/8  text-amber-400'   },
+  difficile: { label: 'Difficile', dot: 'bg-rose-400',    ring: 'border-rose-500/40   bg-rose-500/8   text-rose-400'    },
+} as const;
+
+type Difficulty = keyof typeof DIFF_CONFIG;
+
+/* ── Mastery levels ───────────────────────── */
+type MasteryLevel = 'gold' | 'silver' | 'bronze';
+function getMastery(pct: number): { label: string; level: MasteryLevel } {
+  if (pct >= 80) return { label: '🏆 Maître',   level: 'gold'   };
+  if (pct >= 50) return { label: '💡 Apprenti', level: 'silver' };
+  return             { label: '📖 À revoir',  level: 'bronze' };
+}
+const MASTERY_CLASS: Record<MasteryLevel, string> = {
+  gold:   'border-yellow-500/30 bg-yellow-500/8  text-yellow-400',
+  silver: 'border-blue-400/30   bg-blue-400/8    text-blue-300',
+  bronze: 'border-red-500/30    bg-red-500/8     text-red-400',
+};
+
+const OPTION_KEYS = ['A', 'B', 'C', 'D', 'E'];
+
+/* ═══════════════════════════════════════════
+   Main Component
+   ═══════════════════════════════════════════ */
 export function QuizInterface({ transcript, videoId }: QuizInterfaceProps) {
   const { userId } = useAuth();
-  
-  // Quiz setup settings
-  const [selectedDifficulty, setSelectedDifficulty] = useState<'facile' | 'moyen' | 'difficile'>('moyen');
+
+  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('moyen');
   const [selectedQuestionsCount, setSelectedQuestionsCount] = useState<5 | 10 | 15>(5);
-  
-  // Quiz execution states
   const [quizState, setQuizState] = useState<'setup' | 'generating' | 'active' | 'finished'>('setup');
-  const [quizId, setQuizId] = useState<string>('');
+  const [quizId, setQuizId] = useState('');
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isAnswerChecked, setIsAnswerChecked] = useState(false);
   const [score, setScore] = useState(0);
-  
-  // Database attempts history
   const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
   const [loadingAttempts, setLoadingAttempts] = useState(false);
-  
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch past attempts on mount and when videoId changes
-  useEffect(() => {
-    if (videoId) {
-      fetchAttempts();
-    }
-  }, [videoId]);
+  useEffect(() => { if (videoId) fetchAttempts(); }, [videoId]);
 
   const fetchAttempts = async () => {
     if (!videoId) return;
     setLoadingAttempts(true);
     try {
-      const url = `/api/quiz/attempt?videoId=${videoId}${userId ? `&userId=${userId}` : ''}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        setAttempts(data.attempts || []);
-      }
-    } catch (err) {
-      console.error('Erreur chargement historiques:', err);
-    } finally {
-      setLoadingAttempts(false);
-    }
+      const res = await fetch(`/api/quiz/attempt?videoId=${videoId}${userId ? `&userId=${userId}` : ''}`);
+      if (res.ok) { const d = await res.json(); setAttempts(d.attempts || []); }
+    } catch (e) { console.error(e); }
+    finally { setLoadingAttempts(false); }
   };
 
   const startQuizGeneration = async () => {
@@ -89,55 +102,37 @@ export function QuizInterface({ transcript, videoId }: QuizInterfaceProps) {
     setScore(0);
     setSelectedAnswer(null);
     setIsAnswerChecked(false);
-
     try {
       const res = await fetch('/api/video/quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          transcript, 
-          difficulty: selectedDifficulty, 
-          numberOfQuestions: selectedQuestionsCount, 
-          videoId 
-        }),
+        body: JSON.stringify({ transcript, difficulty: selectedDifficulty, numberOfQuestions: selectedQuestionsCount, videoId }),
       });
-
       if (!res.ok) throw new Error('Erreur lors de la génération du quiz');
-
       const data = await res.json();
-      if (data.quiz && data.quiz.questions) {
+      if (data.quiz?.questions) {
         setQuestions(data.quiz.questions);
         setQuizId(data.quiz.id || '');
         setQuizState('active');
-      } else {
-        throw new Error('Format de quiz invalide reçu');
-      }
+      } else throw new Error('Format de quiz invalide reçu');
     } catch (err: any) {
       setError(err.message || 'Une erreur inattendue est survenue.');
       setQuizState('setup');
     }
   };
 
-  const handleSelectAnswer = (index: number) => {
-    if (isAnswerChecked) return;
-    setSelectedAnswer(index);
-  };
-
   const checkAnswer = () => {
     if (selectedAnswer === null) return;
     setIsAnswerChecked(true);
-    if (selectedAnswer === questions[currentQuestionIndex].correctAnswerIndex) {
-      setScore(s => s + 1);
-    }
+    if (selectedAnswer === questions[currentQuestionIndex].correctAnswerIndex) setScore(s => s + 1);
   };
 
   const nextQuestion = async () => {
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setCurrentQuestionIndex(i => i + 1);
       setSelectedAnswer(null);
       setIsAnswerChecked(false);
     } else {
-      // Quiz finished - save attempt to database first
       setQuizState('finished');
       await saveQuizAttempt();
     }
@@ -150,346 +145,298 @@ export function QuizInterface({ transcript, videoId }: QuizInterfaceProps) {
       await fetch('/api/quiz/attempt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          videoId,
-          quizId,
-          score: finalScore,
-          total: questions.length,
-          difficulty: selectedDifficulty,
-          userId: userId || undefined
-        })
+        body: JSON.stringify({ videoId, quizId, score: finalScore, total: questions.length, difficulty: selectedDifficulty, userId: userId || undefined }),
       });
-      // Refresh history list
       fetchAttempts();
-    } catch (err) {
-      console.error('Erreur lors de la sauvegarde du score:', err);
-    }
+    } catch (e) { console.error(e); }
   };
 
-  const getMasteryBadge = (pct: number) => {
-    if (pct >= 80) return { label: '🏆 Maître', bg: 'bg-green-500/15 text-green-400 border-green-500/20' };
-    if (pct >= 50) return { label: '💡 Apprenti', bg: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/20' };
-    return { label: '📖 À revoir', bg: 'bg-red-500/15 text-red-400 border-red-500/20' };
+  const formatDate = (s: string) => {
+    try { return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(s)); }
+    catch { return s; }
   };
 
-  const getDifficultyColor = (diff: string) => {
-    switch (diff) {
-      case 'facile': return 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20';
-      case 'difficile': return 'text-red-400 bg-red-500/10 border-red-500/20';
-      default: return 'text-orange-400 bg-orange-500/10 border-orange-500/20';
-    }
-  };
+  /* ── 1. SETUP ──────────────────────────────── */
+  if (quizState === 'setup') return (
+    <div className="flex flex-col h-full overflow-y-auto scrollbar-thin py-4 space-y-5 animate-in fade-in duration-300">
 
-  const formatDate = (dateString: string) => {
-    try {
-      return new Intl.DateTimeFormat('fr-FR', {
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(new Date(dateString));
-    } catch {
-      return dateString;
-    }
-  };
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+          <Zap className="w-4 h-4" />
+        </div>
+        <div>
+          <h3 className="text-sm font-bold text-on-surface">Practice Questions</h3>
+          <p className="text-[11px] text-on-surface/35 mt-0.5">Configurez votre session de quiz active</p>
+        </div>
+      </div>
 
-  // --- 1. SETUP / CONFIGURATION SCREEN ---
-  if (quizState === 'setup') {
-    return (
-      <div className="flex flex-col h-full overflow-y-auto pr-1 scrollbar-thin py-4 space-y-6 animate-fade-in">
-        {/* Header Title */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-            <BrainCircuit className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-white leading-tight">Practice Questions</h3>
-            <p className="text-xs text-white/50">Configurez votre session de révision active</p>
+      {/* Error */}
+      {error && (
+        <div className="px-4 py-3 rounded-xl bg-error/8 border border-error/20 text-xs text-error animate-in slide-in-from-top-2 duration-200">
+          {error}
+        </div>
+      )}
+
+      {/* Config card */}
+      <div className="rounded-2xl border border-white/[0.05] bg-surface-container/50 divide-y divide-white/[0.04] overflow-hidden">
+
+        {/* Difficulty */}
+        <div className="p-4 space-y-3">
+          <p className="text-[9px] uppercase tracking-[0.15em] font-bold text-on-surface/25">Difficulté</p>
+          <div className="grid grid-cols-3 gap-2">
+            {(Object.keys(DIFF_CONFIG) as Difficulty[]).map(d => {
+              const cfg = DIFF_CONFIG[d];
+              const active = selectedDifficulty === d;
+              return (
+                <button key={d} onClick={() => setSelectedDifficulty(d)}
+                  className={cn(
+                    'py-2.5 rounded-xl border text-xs font-semibold capitalize transition-all duration-150 flex items-center justify-center gap-1.5',
+                    active ? cfg.ring : 'bg-white/[0.02] border-white/[0.05] text-on-surface/30 hover:bg-white/[0.04] hover:text-on-surface/60'
+                  )}>
+                  {active && <span className={cn('w-1.5 h-1.5 rounded-full', cfg.dot)} />}
+                  {cfg.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Error notification if generation failed */}
-        {error && (
-          <div className="p-4 rounded-xl bg-error/10 border border-error/20 text-center animate-fade-up">
-            <p className="text-sm text-error mb-3">{error}</p>
+        {/* Count */}
+        <div className="p-4 space-y-3">
+          <p className="text-[9px] uppercase tracking-[0.15em] font-bold text-on-surface/25">Questions</p>
+          <div className="grid grid-cols-3 gap-2">
+            {([5, 10, 15] as const).map(n => (
+              <button key={n} onClick={() => setSelectedQuestionsCount(n)}
+                className={cn(
+                  'py-2.5 rounded-xl border text-xs font-semibold transition-all duration-150',
+                  selectedQuestionsCount === n
+                    ? 'border-primary/40 bg-primary/8 text-primary'
+                    : 'bg-white/[0.02] border-white/[0.05] text-on-surface/30 hover:bg-white/[0.04] hover:text-on-surface/60'
+                )}>
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="p-4">
+          <Button onClick={startQuizGeneration}
+            className="w-full h-10 bg-primary text-on-primary font-semibold rounded-xl text-sm gap-2 hover:brightness-105 shadow-md shadow-primary/15 transition-all">
+            <Sparkles className="w-4 h-4" />
+            Lancer le Quiz
+          </Button>
+        </div>
+      </div>
+
+      {/* History */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <History className="w-3 h-3 text-on-surface/20" />
+          <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-on-surface/20">Historique</span>
+        </div>
+
+        {loadingAttempts ? (
+          <div className="flex justify-center py-6">
+            <Loader2 className="w-4 h-4 text-on-surface/20 animate-spin" />
+          </div>
+        ) : attempts.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-white/[0.05] py-8 text-center">
+            <p className="text-[11px] text-on-surface/20">Aucune tentative enregistrée.</p>
+          </div>
+        ) : (
+          <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1 scrollbar-thin">
+            {attempts.map(att => {
+              const pct = Math.round((att.score / att.total) * 100);
+              const m = getMastery(pct);
+              const d = DIFF_CONFIG[att.difficulty as Difficulty] || DIFF_CONFIG.moyen;
+              return (
+                <div key={att.id}
+                  className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-white/[0.04] bg-white/[0.01] hover:bg-white/[0.03] transition-colors">
+                  <div className="space-y-0.5 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-bold text-on-surface font-mono">{att.score}/{att.total}</span>
+                      <span className="text-[10px] text-on-surface/25">({pct}%)</span>
+                      <span className={cn('text-[9px] font-bold border px-1.5 py-0.5 rounded-lg', d.ring)}>{att.difficulty}</span>
+                    </div>
+                    <p className="text-[10px] text-on-surface/25">{formatDate(att.createdAt)}</p>
+                  </div>
+                  <Badge variant="outline" className={cn('text-[10px] font-bold border shrink-0', MASTERY_CLASS[m.level])}>
+                    {m.label}
+                  </Badge>
+                </div>
+              );
+            })}
           </div>
         )}
+      </div>
+    </div>
+  );
 
-        {/* Options Panel */}
-        <div className="bg-[#111115] border border-white/5 rounded-2xl p-5 space-y-5">
-          {/* Difficulty Selection */}
-          <div className="space-y-2.5">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-white/35">Niveau de difficulté</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['facile', 'moyen', 'difficile'] as const).map(diff => {
-                const isActive = selectedDifficulty === diff;
-                let activeStyle = "";
-                if (diff === 'facile') activeStyle = "border-cyan-500/40 bg-cyan-500/10 text-cyan-400";
-                else if (diff === 'difficile') activeStyle = "border-red-500/40 bg-red-500/10 text-red-400";
-                else activeStyle = "border-orange-500/40 bg-orange-500/10 text-orange-400";
-
-                return (
-                  <button
-                    key={diff}
-                    onClick={() => setSelectedDifficulty(diff)}
-                    className={`py-3 rounded-xl border text-xs font-bold capitalize transition-all duration-200 cursor-pointer ${
-                      isActive 
-                        ? activeStyle 
-                        : "bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white"
-                    }`}
-                  >
-                    {diff}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Number of Questions Selection */}
-          <div className="space-y-2.5">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-white/35">Nombre de questions</label>
-            <div className="grid grid-cols-3 gap-2">
-              {([5, 10, 15] as const).map(count => {
-                const isActive = selectedQuestionsCount === count;
-                return (
-                  <button
-                    key={count}
-                    onClick={() => setSelectedQuestionsCount(count)}
-                    className={`py-3 rounded-xl border text-xs font-bold transition-all duration-200 cursor-pointer ${
-                      isActive 
-                        ? "border-primary bg-primary/10 text-primary" 
-                        : "bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white"
-                    }`}
-                  >
-                    {count} Questions
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Action button */}
-          <button
-            onClick={startQuizGeneration}
-            className="w-full py-4.5 bg-linear-to-br from-primary to-primary-container text-[#2b140f] font-extrabold rounded-xl text-sm transition-all duration-300 shadow-[0_4px_20px_rgba(255,85,64,0.15)] hover:shadow-[0_8px_32px_rgba(255,85,64,0.25)] hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4" />
-            LANCER LE QUIZ
-          </button>
-        </div>
-
-        {/* Attempts History Section */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-white/40">
-            <History className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-wider">Historique de vos tentatives</span>
-          </div>
-
-          {loadingAttempts ? (
-            <div className="flex items-center justify-center py-6 text-white/30 text-xs gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Chargement de l&apos;historique...
-            </div>
-          ) : attempts.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-white/5 p-6 text-center text-xs text-white/35">
-              Aucune tentative enregistrée. Obtenez votre premier badge !
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin">
-              {attempts.map(att => {
-                const pct = Math.round((att.score / att.total) * 100);
-                const badge = getMasteryBadge(pct);
-                
-                return (
-                  <div key={att.id} className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 flex items-center justify-between hover:bg-white/[0.04] transition-all">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-extrabold text-white font-mono">{att.score}/{att.total}</span>
-                        <span className="text-[10px] font-semibold text-white/30">({pct}%)</span>
-                        <span className={`text-[9px] uppercase tracking-wider font-bold border px-1.5 py-0.5 rounded-md ${getDifficultyColor(att.difficulty)}`}>
-                          {att.difficulty}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-white/40">{formatDate(att.createdAt)}</p>
-                    </div>
-
-                    <span className={`text-xs font-bold border px-2.5 py-1 rounded-xl shrink-0 ${badge.bg}`}>
-                      {badge.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+  /* ── 2. GENERATING ─────────────────────────── */
+  if (quizState === 'generating') return (
+    <div className="flex flex-col items-center justify-center h-full min-h-[360px] gap-6 animate-in fade-in duration-300">
+      <div className="relative">
+        <div className="absolute inset-0 bg-primary/15 blur-3xl rounded-full scale-[2] animate-pulse" />
+        <div className="relative w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+          <BrainCircuit className="w-7 h-7 text-primary animate-pulse" />
         </div>
       </div>
-    );
-  }
-
-  // --- 2. GENERATING ACTIVE SCREEN ---
-  if (quizState === 'generating') {
-    return (
-      <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center animate-pulse">
-        <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6 text-primary animate-spin duration-3000">
-          <BrainCircuit className="w-8 h-8" />
-        </div>
-        <h4 className="text-base font-bold text-white mb-2">Conception du Quiz IA...</h4>
-        <p className="text-xs text-white/40 max-w-xs leading-relaxed">
-          Notre enseignant IA analyse la transcription vidéo pour formuler {selectedQuestionsCount} questions personnalisées en difficulté &quot;{selectedDifficulty}&quot;.
+      <div className="text-center space-y-1.5">
+        <p className="text-sm font-semibold text-on-surface">Conception du quiz…</p>
+        <p className="text-xs text-on-surface/35 max-w-[220px] leading-relaxed">
+          L'IA formule {selectedQuestionsCount} questions en niveau &quot;{DIFF_CONFIG[selectedDifficulty].label}&quot;.
         </p>
       </div>
-    );
-  }
+      <Progress value={undefined} className="w-32 h-0.5 bg-white/5 [&>div]:bg-primary [&>div]:animate-pulse" />
+    </div>
+  );
 
-  // --- 3. RESULTS / SCORE SUMMARY SCREEN ---
+  /* ── 3. FINISHED ───────────────────────────── */
   if (quizState === 'finished') {
     const finalScore = selectedAnswer === questions[currentQuestionIndex].correctAnswerIndex ? score + 1 : score;
-    const percentage = Math.round((finalScore / questions.length) * 100);
-    const badge = getMasteryBadge(percentage);
+    const pct = Math.round((finalScore / questions.length) * 100);
+    const m = getMastery(pct);
 
     return (
-      <div className="flex flex-col justify-center items-center h-full min-h-[400px] text-center py-6 animate-fade-in space-y-6">
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-6 py-6 animate-in fade-in zoom-in-95 duration-400">
+        {/* Score ring */}
         <div className="relative">
-          {/* Outer radial glow */}
-          <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-150 animate-pulse" />
-          
-          <div className="relative text-7xl font-black text-white font-mono tracking-tighter bg-white/5 border border-white/10 rounded-3xl w-32 h-32 flex items-center justify-center shadow-2xl">
-            {finalScore}/{questions.length}
+          <div className="absolute inset-0 bg-primary/12 blur-3xl rounded-full scale-[2.5] animate-pulse" />
+          <div className="relative w-28 h-28 rounded-3xl bg-surface-container border border-white/[0.06] shadow-2xl flex flex-col items-center justify-center gap-0.5">
+            <span className="text-3xl font-black text-on-surface font-mono tabular-nums">{finalScore}/{questions.length}</span>
+            <span className="text-[9px] font-bold uppercase tracking-widest text-on-surface/30">{pct}%</span>
           </div>
         </div>
 
-        <div className="space-y-1">
-          <p className="text-xs uppercase font-extrabold tracking-widest text-[#ff8f87]">Session complétée ({percentage}%)</p>
-          <div className="flex justify-center pt-1.5">
-            <span className={`text-sm font-extrabold border px-4 py-1.5 rounded-full ${badge.bg}`}>
-              {badge.label}
-            </span>
-          </div>
+        {/* Feedback */}
+        <div className="text-center space-y-2.5">
+          <Progress value={pct} className="w-36 h-1 bg-white/5 [&>div]:bg-primary [&>div]:transition-all [&>div]:duration-1000" />
+          <Badge variant="outline" className={cn('font-bold border text-xs px-3 py-1', MASTERY_CLASS[m.level])}>
+            {m.label}
+          </Badge>
+          <p className={cn('text-xs max-w-[220px] leading-relaxed font-medium mx-auto',
+            pct >= 80 ? 'text-emerald-400' : pct >= 50 ? 'text-amber-400' : 'text-red-400/80'
+          )}>
+            {pct >= 80
+              ? 'Masterclass ! Vous maîtrisez parfaitement les concepts.'
+              : pct >= 50
+                ? 'Bonne base — quelques points à consolider.'
+                : 'Recommencez ou posez des questions à l\'IA.'}
+          </p>
         </div>
 
-        <div className="max-w-xs text-sm text-white/50 leading-relaxed">
-          {percentage >= 80 ? (
-            <p className="text-green-400 font-medium">Masterclass ! Vous avez parfaitement assimilé les concepts clés présentés.</p>
-          ) : percentage >= 50 ? (
-            <p className="text-yellow-400 font-medium">Bonne maîtrise globale, quelques points méritent d&apos;être consolidés.</p>
-          ) : (
-            <p className="text-red-400/90 font-medium">Nous vous recommandons de réécouter la vidéo ou de poser des questions à l&apos;assistant IA.</p>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2 w-full max-w-xs pt-4">
-          <button
-            onClick={startQuizGeneration}
-            className="w-full py-3.5 bg-primary text-[#2b140f] font-extrabold rounded-xl text-sm transition-all hover:brightness-110 flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <RefreshCcw className="w-4 h-4" />
+        {/* Actions */}
+        <div className="flex flex-col gap-2 w-full max-w-[220px]">
+          <Button onClick={startQuizGeneration}
+            className="w-full h-10 bg-primary text-on-primary font-semibold rounded-xl text-sm gap-2 hover:brightness-105 shadow-md shadow-primary/15">
+            <RefreshCcw className="w-3.5 h-3.5" />
             Nouveau Quiz
-          </button>
-          
-          <button
-            onClick={() => setQuizState('setup')}
-            className="w-full py-3.5 bg-white/5 border border-white/10 text-white/80 font-bold rounded-xl text-sm transition-all hover:bg-white/10 cursor-pointer"
-          >
-            Retour aux réglages
-          </button>
+          </Button>
+          <Button variant="ghost" onClick={() => setQuizState('setup')}
+            className="w-full h-9 rounded-xl text-sm text-on-surface/40 hover:text-on-surface/70 border border-white/[0.05] font-medium">
+            Réglages
+          </Button>
         </div>
       </div>
     );
   }
 
-  // --- 4. ACTIVE QUIZ EXECUTION SCREEN ---
-  const currentQuestion = questions[currentQuestionIndex];
+  /* ── 4. ACTIVE ─────────────────────────────── */
+  const q = questions[currentQuestionIndex];
+  const progress = (currentQuestionIndex / questions.length) * 100;
 
   return (
-    <div className="flex flex-col h-full py-4 space-y-4 animate-fade-in">
-      {/* Header Info */}
-      <div className="flex justify-between items-center shrink-0">
-        <span className="text-[10px] font-extrabold tracking-widest uppercase text-white/35">
-          Question {currentQuestionIndex + 1} sur {questions.length}
-        </span>
-        <div className="flex items-center gap-2 bg-[#ff5540]/10 text-primary border border-primary/20 px-3 py-1 rounded-full">
-          <Trophy className="w-3.5 h-3.5" />
-          <span className="text-xs font-black font-mono">Score : {score}</span>
+    <div className="flex flex-col h-full py-4 gap-4 animate-in fade-in duration-200">
+
+      {/* Progress header */}
+      <div className="shrink-0 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[9px] font-bold tracking-[0.14em] uppercase text-on-surface/25">
+            {currentQuestionIndex + 1} / {questions.length}
+          </span>
+          <div className="flex items-center gap-1.5 bg-primary/8 text-primary border border-primary/15 px-2.5 py-1 rounded-full">
+            <Trophy className="w-3 h-3" />
+            <span className="text-xs font-black font-mono">{score}</span>
+          </div>
         </div>
+        <Progress value={progress}
+          className="h-0.5 bg-white/[0.04] [&>div]:bg-primary [&>div]:transition-all [&>div]:duration-500" />
       </div>
 
-      {/* The Question Text */}
-      <div className="bg-[#111115] border border-white/5 rounded-2xl p-5 shrink-0">
-        <h3 className="text-sm md:text-base font-extrabold text-white leading-snug">
-          {currentQuestion.question}
-        </h3>
+      {/* Question */}
+      <div className="shrink-0 rounded-2xl border border-white/[0.05] bg-surface-container/40 p-4">
+        <p className="text-sm font-semibold text-on-surface leading-relaxed">{q.question}</p>
       </div>
 
-      {/* Answer Options Grid */}
-      <div className="flex-1 overflow-y-auto pr-1 space-y-2.5 scrollbar-thin">
-        {currentQuestion.options.map((option, index) => {
-          let buttonClass = "w-full text-left p-4 rounded-xl border text-sm transition-all duration-200 cursor-pointer flex justify-between items-center ";
-
-          if (!isAnswerChecked) {
-            buttonClass += selectedAnswer === index
-              ? "bg-primary/10 border-primary text-primary"
-              : "bg-white/[0.02] border-white/5 text-white/70 hover:bg-white/5 hover:text-white";
-          } else {
-            if (index === currentQuestion.correctAnswerIndex) {
-              buttonClass += "bg-green-500/10 border-green-500/30 text-green-400 font-bold";
-            } else if (index === selectedAnswer) {
-              buttonClass += "bg-red-500/10 border-red-500/30 text-red-400";
-            } else {
-              buttonClass += "bg-transparent border-transparent text-white/20 opacity-40";
-            }
-          }
+      {/* Options */}
+      <div className="flex-1 overflow-y-auto space-y-2 scrollbar-thin pr-0.5">
+        {q.options.map((option, idx) => {
+          const isSelected = selectedAnswer === idx;
+          const isCorrect = idx === q.correctAnswerIndex;
+          const isWrong = isAnswerChecked && isSelected && !isCorrect;
+          const isRevealCorrect = isAnswerChecked && isCorrect;
+          const isDimmed = isAnswerChecked && !isSelected && !isCorrect;
 
           return (
-            <button
-              key={index}
-              onClick={() => handleSelectAnswer(index)}
+            <button key={idx}
+              onClick={() => !isAnswerChecked && setSelectedAnswer(idx)}
               disabled={isAnswerChecked}
-              className={buttonClass}
-            >
-              <span className="leading-snug pr-4">{option}</span>
-              {isAnswerChecked && index === currentQuestion.correctAnswerIndex && (
-                <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
-              )}
-              {isAnswerChecked && index === selectedAnswer && index !== currentQuestion.correctAnswerIndex && (
-                <XCircle className="w-4 h-4 text-red-400 shrink-0" />
-              )}
+              className={cn(
+                'w-full text-left flex items-center gap-3 p-3.5 rounded-xl border text-sm transition-all duration-150',
+                !isAnswerChecked && !isSelected && 'bg-white/[0.01] border-white/[0.05] text-on-surface/55 hover:bg-white/[0.04] hover:text-on-surface/80 hover:border-white/10 cursor-pointer',
+                !isAnswerChecked && isSelected && 'bg-primary/10 border-primary/35 text-primary cursor-pointer',
+                isRevealCorrect && 'bg-emerald-500/8 border-emerald-500/25 text-emerald-400',
+                isWrong && 'bg-rose-500/8 border-rose-500/25 text-rose-400',
+                isDimmed && 'opacity-25 border-transparent bg-transparent cursor-not-allowed',
+              )}>
+              {/* Key badge */}
+              <span className={cn(
+                'w-5 h-5 rounded-md text-[10px] font-black flex items-center justify-center shrink-0 transition-all',
+                !isAnswerChecked && !isSelected && 'bg-white/[0.04] text-on-surface/25',
+                !isAnswerChecked && isSelected && 'bg-primary/20 text-primary',
+                isRevealCorrect && 'bg-emerald-500/15 text-emerald-400',
+                isWrong && 'bg-rose-500/15 text-rose-400',
+                isDimmed && 'bg-white/[0.02] text-on-surface/15',
+              )}>
+                {OPTION_KEYS[idx]}
+              </span>
+
+              <span className="leading-snug flex-1">{option}</span>
+
+              {isRevealCorrect && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
+              {isWrong && <XCircle className="w-4 h-4 text-rose-400 shrink-0" />}
             </button>
           );
         })}
       </div>
 
-      {/* Bottom control panel */}
-      <div className="pt-3 border-t border-white/5 shrink-0">
+      {/* Footer controls */}
+      <div className="shrink-0 pt-2 border-t border-white/[0.04]">
         {!isAnswerChecked ? (
-          <button
-            onClick={checkAnswer}
-            disabled={selectedAnswer === null}
-            className="w-full py-4.5 bg-linear-to-br from-primary to-primary-container text-[#2b140f] font-extrabold rounded-xl text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 cursor-pointer"
-          >
-            VÉRIFIER LA RÉPONSE
-          </button>
+          <Button onClick={checkAnswer} disabled={selectedAnswer === null}
+            className="w-full h-10 bg-primary text-on-primary font-semibold rounded-xl text-sm hover:brightness-105 shadow-md shadow-primary/15 disabled:opacity-25 disabled:cursor-not-allowed transition-all">
+            Vérifier la réponse
+          </Button>
         ) : (
-          <div className="space-y-3.5 animate-fade-up">
-            {/* Explanation box */}
-            <div className={`p-4 rounded-xl border text-xs leading-relaxed ${
-              selectedAnswer === currentQuestion.correctAnswerIndex
-                ? 'bg-green-500/5 border-green-500/10 text-green-400/90'
-                : 'bg-red-500/5 border-red-500/10 text-red-400/90'
-            }`}>
-              <span className="font-extrabold block mb-1 uppercase tracking-wider">
-                {selectedAnswer === currentQuestion.correctAnswerIndex ? '✓ Correct' : '✗ Erreur'}
+          <div className="space-y-3 animate-in slide-in-from-bottom-2 duration-200">
+            <div className={cn(
+              'p-3.5 rounded-xl border text-xs leading-relaxed',
+              selectedAnswer === q.correctAnswerIndex
+                ? 'bg-emerald-500/5 border-emerald-500/15 text-emerald-400/90'
+                : 'bg-rose-500/5 border-rose-500/15 text-rose-400/90'
+            )}>
+              <span className="font-bold block mb-1 text-[10px] uppercase tracking-wider">
+                {selectedAnswer === q.correctAnswerIndex ? '✓ Correct' : '✗ Erreur'}
               </span>
-              {currentQuestion.explanation}
+              {q.explanation}
             </div>
-
-            {/* Next / Finished button */}
-            <button
-              onClick={nextQuestion}
-              className="w-full py-4.5 bg-white/5 border border-white/10 text-white font-bold rounded-xl text-sm transition-all hover:bg-white/10 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>{currentQuestionIndex < questions.length - 1 ? 'QUESTION SUIVANTE' : 'VOIR LES RÉSULTATS'}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <Button onClick={nextQuestion} variant="outline"
+              className="w-full h-9 rounded-xl text-xs font-semibold border-white/[0.08] bg-white/[0.02] text-on-surface/70 hover:bg-white/[0.05] hover:text-on-surface gap-2">
+              {currentQuestionIndex < questions.length - 1 ? 'Question suivante' : 'Voir les résultats'}
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Button>
           </div>
         )}
       </div>

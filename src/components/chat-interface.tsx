@@ -2,8 +2,10 @@
 
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, UIMessage } from 'ai';
-import { Send, BrainCircuit } from 'lucide-react';
+import { BrainCircuit,ArrowUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ChatInterfaceProps {
   transcript: string;
@@ -166,7 +168,7 @@ function ChatInterfaceInner({
     lastMessagesLengthRef.current = messages.length;
   }, [messages, status]);
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const form = e.currentTarget.form;
@@ -174,19 +176,27 @@ function ChatInterfaceInner({
     }
   };
 
-  const handleSubmit = (e: React.SubmitEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     sendMessage({ text: input });
     setInput('');
   };
 
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100vh - 12rem)' }}>
-      <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pr-2 mb-4 scrollbar-thin">
+    <div className="h-full flex flex-col justify-between overflow-hidden">
+      <div 
+        ref={containerRef} 
+        className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin scrollbar-thumb-surface-highest scrollbar-track-transparent"
+      >
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-on-surface-variant space-y-4">
-            <BrainCircuit className="w-10 h-10 opacity-50" />
-            <p className="text-sm">Bonjour ! Je suis SmartTube AI.<br />Posez-moi des questions sur cette vidéo.</p>
+            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+              <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}><BrainCircuit/> </span>
+            </div>
+            <p className="text-sm text-center font-medium leading-relaxed">
+              Bonjour ! Je suis SmartTube AI.<br />
+              <span className="text-xs text-neutral-500 font-normal">Posez-moi des questions sur cette vidéo.</span>
+            </p>
           </div>
         ) : (
           messages.map((m) => (
@@ -194,46 +204,58 @@ function ChatInterfaceInner({
               key={m.id}
               className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div
-                className={`max-w-[85%] rounded-lg p-4 text-sm ${m.role === 'user'
-                  ? 'bg-primary-container text-on-primary-container font-medium'
-                  : 'bg-surface-high text-on-surface-variant border border-outline-variant'
-                  }`}
-              >
-                {m.role === 'assistant' && (
-                  <div className="flex items-center gap-2 mb-3">
-                    <BrainCircuit className="w-4 h-4 text-primary" />
-                    <span className="text-xs font-bold text-primary tracking-wider uppercase">SmartTube AI</span>
+              {m.role === 'user' ? (
+                <div className="flex flex-col items-end gap-2 max-w-[85%]">
+                  <div className="bg-primary-container text-on-primary-container p-4 rounded-2xl rounded-tr-none shadow-sm shadow-primary/20">
+                    <div className="text-sm font-medium leading-relaxed whitespace-pre-wrap">
+                      {m.parts ? m.parts.map((part, i) => {
+                        if (part.type === 'text') {
+                          return part.text;
+                        }
+                        return null;
+                      }) : (m as any).content}
+                    </div>
                   </div>
-                )}
-
-                {m.parts ? m.parts.map((part, i) => {
-                  if (part.type === 'text') {
-                    return (
-                      <div key={i} className="leading-relaxed whitespace-pre-wrap">
-                        {renderMessageContent(part.text)}
-                      </div>
-                    );
-                  }
-                  return null;
-                }) : typeof (m as any).content === 'string' && (
-                   <div className="leading-relaxed whitespace-pre-wrap">
-                      {renderMessageContent((m as any).content)}
-                   </div>
-                )}
-
-              </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-start gap-2 max-w-[90%]">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center">
+                      <span className="material-symbols-outlined text-primary text-xs" style={{ fontVariationSettings: "'FILL' 1" }}> <BrainCircuit/> </span>
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-tighter text-on-surface-variant">SmartTube AI</span>
+                  </div>
+                  <div className="bg-surface-highest p-4 rounded-2xl rounded-tl-none border border-outline-variant/10 space-y-3">
+                    {m.parts ? m.parts.map((part, i) => {
+                      if (part.type === 'text') {
+                        return (
+                          <div key={i} className="text-sm leading-relaxed whitespace-pre-wrap text-on-surface/90">
+                            {renderMessageContent(part.text)}
+                          </div>
+                        );
+                      }
+                      return null;
+                    }) : typeof (m as any).content === 'string' && (
+                       <div className="text-sm leading-relaxed whitespace-pre-wrap text-on-surface/90">
+                          {renderMessageContent((m as any).content)}
+                       </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}
         {isLoading && (
-          <div className="flex justify-start">
-            <div className="max-w-[85%] rounded-lg p-4 bg-surface-high border border-outline-variant">
-              <div className="flex items-center gap-2 mb-3">
-                <BrainCircuit className="w-4 h-4 text-primary animate-pulse" />
-                <span className="text-xs font-bold text-primary tracking-wider uppercase">SmartTube AI</span>
+          <div className="flex flex-col items-start gap-2 max-w-[90%]">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary text-xs animate-pulse" style={{ fontVariationSettings: "'FILL' 1" }}><BrainCircuit/> </span>
               </div>
-              <div className="flex gap-1.5 items-center h-4">
+              <span className="text-[10px] font-black uppercase tracking-tighter text-on-surface-variant">SmartTube AI</span>
+            </div>
+            <div className="bg-surface-container-high p-4 rounded-2xl rounded-tl-none border border-outline-variant/10">
+              <div className="flex gap-1.5 items-center h-4 py-1">
                 <span className="w-1.5 h-1.5 bg-on-surface-variant/50 rounded-full animate-bounce"></span>
                 <span className="w-1.5 h-1.5 bg-on-surface-variant/50 rounded-full animate-bounce delay-75"></span>
                 <span className="w-1.5 h-1.5 bg-on-surface-variant/50 rounded-full animate-bounce delay-150"></span>
@@ -243,30 +265,38 @@ function ChatInterfaceInner({
         )}
       </div>
 
-      <div className="bg-surface-lowest border border-surface-highest rounded-2xl p-2 mt-auto">
-        <form onSubmit={handleSubmit} className="flex flex-row">
-          <input
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder="Ask a question about this video..."
-            className="w-full bg-transparent text-on-surface p-3 text-sm placeholder-outline-variant focus:outline-none resize-none"
-            disabled={isLoading}
-          />
-          <div className="flex items-center justify-between px-2 pb-1 mt-2">
-
-            <button
+      <div className="px-3 bg-surface-low border-t border-outline-variant/10 mt-auto">
+        <form onSubmit={handleSubmit}>
+          <div className="relative group">
+            <Textarea
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder="Ask a question about this video..."
+              disabled={isLoading}
+              rows={2}
+              className="w-full bg-surface-container rounded-2xl p-4 pr-12 text-sm text-on-surface placeholder:text-neutral-500 border border-outline-variant/10 focus:border-none resize-none transition-all outline-none min-h-16"
+            />
+            <Button
               type="submit"
               disabled={isLoading || !input?.trim()}
-              className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              size="icon"
+              className="absolute bottom-3 right-3 w-8 h-8 bg-primary text-on-primary rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform shadow-lg shadow-primary/30 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Send className="w-4 h-4 -ml-0.5" />
-            </button>
+              <span className="material-symbols-outlined text-sm font-bold"> <ArrowUp /> </span>
+            </Button>
+          </div>
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex gap-3">
+             
+            </div>
+            <span className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest">Press Enter to send</span>
           </div>
         </form>
       </div>
     </div>
   );
+
 }
 
 function extractVideoId(url: string): string | null {

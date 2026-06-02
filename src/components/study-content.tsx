@@ -370,46 +370,44 @@ export function StudyContent() {
   );
 
   return (
-    <div className="min-h-screen bg-[#0b0b0d] pb-12">
-      <div className="grid grid-cols-3 gap-6 p-6 max-w-7xl mx-auto relative">
-        {/* Panneau Gauche : Lecteur Vidéo + Titre + Transcription/Notes */}
-        <StudyLeftPanel
-          url={url}
-          isMounted={isMounted}
-          playerRef={playerRef}
-          onTimeUpdate={(time) => setCurrentTime(time)}
-          videoInfo={videoInfo}
-          maxScore={maxScore}
-          studyTab={studyTab}
-          setStudyTab={setStudyTab}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          showTimestamps={showTimestamps}
-          setShowTimestamps={setShowTimestamps}
-          currentTime={currentTime}
-          filteredSegments={filteredSegments}
-          handleTimelineClick={handleTimelineClick}
-          handleExportTranscriptPDF={handleExportTranscriptPDF}
-          activeSegmentRef={activeSegmentRef}
-          isGenerating={isGenerating}
-          notes={notes}
-          copied={copied}
-          handleCopyNotes={handleCopyNotes}
-          handleExportNotesPDF={handleExportNotesPDF}
-          handleExportNotes={handleExportNotes}
-          handleGenerateNotes={handleGenerateNotes}
-        />
+    <div className="h-[calc(100vh-64px)] w-full overflow-hidden bg-surface-container-lowest flex flex-row">
+      {/* Panneau Gauche : Lecteur Vidéo + Titre + Transcription/Notes */}
+      <StudyLeftPanel
+        url={url}
+        isMounted={isMounted}
+        playerRef={playerRef}
+        onTimeUpdate={(time) => setCurrentTime(time)}
+        videoInfo={videoInfo}
+        maxScore={maxScore}
+        studyTab={studyTab}
+        setStudyTab={setStudyTab}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        showTimestamps={showTimestamps}
+        setShowTimestamps={setShowTimestamps}
+        currentTime={currentTime}
+        filteredSegments={filteredSegments}
+        handleTimelineClick={handleTimelineClick}
+        handleExportTranscriptPDF={handleExportTranscriptPDF}
+        activeSegmentRef={activeSegmentRef}
+        isGenerating={isGenerating}
+        notes={notes}
+        copied={copied}
+        handleCopyNotes={handleCopyNotes}
+        handleExportNotesPDF={handleExportNotesPDF}
+        handleExportNotes={handleExportNotes}
+        handleGenerateNotes={handleGenerateNotes}
+      />
 
-        {/* Panneau Droit : Chat Assist & Quiz */}
-        <StudyRightPanel
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          transcript={transcript}
-          url={url}
-          videoId={videoId}
-          handleTimelineClick={handleTimelineClick}
-        />
-      </div>
+      {/* Panneau Droit : Chat Assist & Quiz */}
+      <StudyRightPanel
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        transcript={transcript}
+        url={url}
+        videoId={videoId}
+        handleTimelineClick={handleTimelineClick}
+      />
     </div>
   );
 }
