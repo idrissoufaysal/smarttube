@@ -1,7 +1,6 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { UrlInput } from "@/components/UrlInput";
+import { RevealSection } from "@/components/reveal-section";
+import type { Metadata } from "next";
 
 /* ─── SVG Icon Components ─── */
 const IconBrain = () => (
@@ -38,47 +37,6 @@ const IconPlay = () => (
   </svg>
 );
 
-const IconPaste = () => (
-  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4 shrink-0 opacity-40">
-    <path d="M6 4H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1M9 2h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z" />
-  </svg>
-);
-
-const IconCheck = () => (
-  <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5">
-    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
-  </svg>
-);
-
-/* ─── Animated Section Observer ─── */
-function useReveal() {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { el.classList.add("revealed"); obs.unobserve(el); } },
-      { threshold: 0.15 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-  return ref;
-}
-
-function RevealSection({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
-  const ref = useReveal();
-  return (
-    <div
-      ref={ref}
-      className={`reveal-section ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
-  );
-}
-
 /* ─── Data ─── */
 const FEATURES = [
   { icon: <IconBrain />, title: "Décryptage IA", desc: "Analyse approfondie de sujets complexes, divisés automatiquement en blocs faciles à assimiler.", color: "#93b7ff" },
@@ -99,53 +57,15 @@ const STATS = [
   { value: "4.9★", label: "Note Utilisateurs" },
 ];
 
+export const metadata: Metadata = {
+  title: "SmartTube | Transformez n'importe quelle vidéo en leçon structurée",
+  description: "Fini le visionnage passif. Place à l'apprentissage actif. Générez instantanément des résumés par IA, des transcriptions interactives et des quiz sur mesure.",
+};
+
 /* ═══════════════════════════════════════════
-   LANDING PAGE
+   LANDING PAGE (Server Component)
    ═══════════════════════════════════════════ */
 export default function Home() {
-  const router = useRouter();
-  const [url, setUrl] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]+/;
-    if (!youtubeRegex.test(url)) {
-      setError("Veuillez entrer une URL YouTube valide.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const res = await fetch("/api/transcript", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Impossible d'extraire la transcription.");
-        return;
-      }
-
-      // sessionStorage évite la limite de longueur d'URL
-      sessionStorage.setItem('smarttube_transcript', data.transcript);
-      sessionStorage.setItem('smarttube_segments', JSON.stringify(data.segments));
-      sessionStorage.setItem('smarttube_url', url);
-      router.push(`/study?url=${encodeURIComponent(url)}`);
-    } catch {
-      setError("Erreur réseau. Réessayez.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#0b0b0d] text-[#f2f2f3]">
       <style>{`
@@ -160,9 +80,9 @@ export default function Home() {
         }
       `}</style>
 
-      <main >
+      <main>
         {/* ══════ HERO ══════ */}
-        <section className="relative overflow-hidden min-h-screen pb-8 pt-16 md:pb-16 md:pt-28 hero-gradient">
+        <section className="relative overflow-hidden min-h-screen pb-8 pt-16 md:pb-16 md:pt-28 hero-gradient" id="url-input-section">
           {/* Ambient glow */}
           <div className="absolute top-0 right-0 -z-10 opacity-20">
             <div className="w-[800px] h-[800px] bg-primary/20 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/3"></div>
@@ -175,43 +95,13 @@ export default function Home() {
               </h1>
 
               {/* Subtitle */}
-              <p className="mx-auto mt-6 max-w-2xl animate-fade-up text-pretty text-base leading-relaxed text-white/55 md:text-lg" style={{ animationDelay: "100ms" }}>
+              <p className="mx-auto mt-6 max-w-2xl text-pretty text-base leading-relaxed text-white/55 md:text-lg">
                 Fini le visionnage passif. Place à l'apprentissage actif. Collez un lien pour générer
                 instantanément des transcriptions, des notes propulsées par l'IA et des quiz personnalisés.
               </p>
 
-              {/* URL Input */}
-              <form onSubmit={handleSubmit} className="w-full max-w-3xl mt-8 mx-auto">
-                <div className="h-15 bg-surface-container/50 backdrop-blur-lg p-2 rounded-lg border border-outline-variant/10 shadow-2xl flex flex-col md:flex-row gap-2">
-                  <input
-                    className="bg-transparent border-none focus:ring-0 w-full px-6 text-on-surface text-lg placeholder:text-neutral-600"
-                    placeholder="Collez un lien YouTube..."
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                  />
-                  <button
-                    type="submit"
-                    disabled={loading || !url.trim()}
-                    className="bg-linear-to-br from-primary to-primary-container text-on-primary-container w-full md:w-[35%] rounded-md font-bold text-lg hover:brightness-110 transition-all flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                        Extraction...
-                      </span>
-                    ) : (
-                      "Commencer "
-                    )}
-                  </button>
-                </div>
-                {error && (
-                  <p className="text-red-400 text-sm mt-3 text-center">{error}</p>
-                )}
-              </form>
-
+              {/* URL Input Form Component */}
+              <UrlInput />
             </div>
           </div>
         </section>
@@ -365,7 +255,7 @@ export default function Home() {
                   Rejoignez des milliers d'étudiants qui ont transformé leurs habitudes d'étude avec SmartTube.
                 </p>
                 <a
-                  href="#hero-input"
+                  href="#url-input-section"
                   className="mt-8 inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold gradient-primary text-[#2b140f] shadow-[0_8px_32px_rgba(255,85,64,0.25)] transition-all duration-200 hover:shadow-[0_16px_48px_rgba(255,85,64,0.3)] hover:scale-[1.03] active:scale-[0.98]"
                 >
                   Commencer à apprendre — C'est gratuit

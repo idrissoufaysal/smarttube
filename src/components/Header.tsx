@@ -2,6 +2,7 @@
 
 import { useAuth, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const IconPlay = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
@@ -16,12 +17,12 @@ export function Header() {
     <header className="sticky top-0 z-50 glass-subtle">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 md:px-8">
         <div className="flex items-center gap-8">
-          <a href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <Image src="/logo.png" alt="Logo" width={200} height={250} />
-             </a>
+          </Link>
           <nav className="hidden items-center gap-6 text-sm text-white/50 md:flex">
-            <a href="/" className="transition-colors duration-200 hover:text-white/90">Home</a>
-            <a href="/library" className="transition-colors duration-200 hover:text-white/90">My Library</a>
+            <Link href="/" className="transition-colors duration-200 hover:text-white/90">Home</Link>
+            <Link href="/library" className="transition-colors duration-200 hover:text-white/90">My Library</Link>
             <a href="#" className="transition-colors duration-200 hover:text-white/90">Explore</a>
           </nav>
         </div>

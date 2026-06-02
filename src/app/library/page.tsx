@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db';
 import Link from 'next/link';
+import Image from 'next/image';
 
 async function getLibraryVideos() {
   try {
@@ -118,11 +119,12 @@ function VideoCardComponent({ video }: { video: VideoCard }) {
       {/* Thumbnail */}
       <div className="relative aspect-video bg-[#1a1a1e] overflow-hidden">
         {video.thumbnail ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={video.thumbnail}
             alt={video.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1e2028] to-[#13141a]">

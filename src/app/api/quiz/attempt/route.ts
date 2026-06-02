@@ -1,12 +1,11 @@
 import { prisma } from '@/lib/db';
-import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
     const { videoId, quizId, score, total, difficulty, userId } = await req.json();
 
     if (!videoId || !quizId || score === undefined || total === undefined || !difficulty) {
-      return NextResponse.json({ error: 'Champs requis manquants.' }, { status: 400 });
+      return Response.json({ error: 'Champs requis manquants.' }, { status: 400 });
     }
 
     const attempt = await prisma.quizAttempt.create({
@@ -20,10 +19,10 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, attempt });
+    return Response.json({ success: true, attempt });
   } catch (error: any) {
     console.error('Erreur enregistrement tentative:', error);
-    return NextResponse.json({ error: 'Erreur interne du serveur.' }, { status: 500 });
+    return Response.json({ error: 'Erreur interne du serveur.' }, { status: 500 });
   }
 }
 
@@ -34,7 +33,7 @@ export async function GET(req: Request) {
     const userId = searchParams.get('userId');
 
     if (!videoId) {
-      return NextResponse.json({ error: 'videoId est requis.' }, { status: 400 });
+      return Response.json({ error: 'videoId est requis.' }, { status: 400 });
     }
 
     // Récupérer les tentatives. Si userId est fourni, on filtre par celui-ci, 
@@ -50,9 +49,9 @@ export async function GET(req: Request) {
       take: 10, // Récupère les 10 dernières tentatives
     });
 
-    return NextResponse.json({ attempts });
+    return Response.json({ attempts });
   } catch (error: any) {
     console.error('Erreur récupération tentatives:', error);
-    return NextResponse.json({ error: 'Erreur interne du serveur.' }, { status: 500 });
+    return Response.json({ error: 'Erreur interne du serveur.' }, { status: 500 });
   }
 }
