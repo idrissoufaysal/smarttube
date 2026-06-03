@@ -3,6 +3,7 @@
 import React from 'react';
 import { ChatInterface } from '@/components/chat-interface';
 import { QuizInterface } from '@/components/quiz-interface';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export interface StudyRightPanelProps {
   activeTab: string;
@@ -11,6 +12,7 @@ export interface StudyRightPanelProps {
   url: string;
   videoId: string | undefined;
   handleTimelineClick: (seconds: number) => void;
+  loading?: boolean;
 }
 
 export function StudyRightPanel({
@@ -20,6 +22,7 @@ export function StudyRightPanel({
   url,
   videoId,
   handleTimelineClick,
+  loading = false,
 }: StudyRightPanelProps) {
   return (
     <div className="w-[450px] bg-surface-low border-l border-outline-variant/10 flex flex-col shrink-0 h-full overflow-hidden">
@@ -47,7 +50,16 @@ export function StudyRightPanel({
       </div>
 
       <div className="flex-1 overflow-hidden">
-        {activeTab === 'ai' ? (
+        {loading ? (
+          <div className="p-6 space-y-4">
+            <Skeleton className="h-10 w-3/4 rounded-xl" />
+            <Skeleton className="h-16 w-full rounded-xl" />
+            <Skeleton className="h-12 w-5/6 rounded-xl" />
+            <Skeleton className="h-20 w-full rounded-xl" />
+            <Skeleton className="h-10 w-2/3 rounded-xl" />
+            <Skeleton className="h-14 w-full rounded-xl" />
+          </div>
+        ) : activeTab === 'ai' ? (
           transcript ? (
             <ChatInterface
               transcript={transcript}

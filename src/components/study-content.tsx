@@ -8,6 +8,7 @@ import { UrlModal } from '@/components/url-modal';
 import { StudyLeftPanel } from './study/study-left-panel';
 import { StudyRightPanel } from './study/study-right-panel';
 import { SegmentItem, VideoInfo } from './study/types';
+import { FileText } from 'lucide-react';
 
 export function StudyContent() {
   const router = useRouter();
@@ -149,12 +150,37 @@ export function StudyContent() {
     try {
       setNotes(null);
       setCompletion('');
+
+      // 1. Vérifier d'abord si les notes sont déjà en cache (réponse texte brut)
+      //    L'API retourne new Response(texte) pour le cache, et toTextStreamResponse()
+      //    pour la génération. On distingue les deux via le Content-Type.
+      if (!forceRegenerate) {
+        const checkRes = await fetch('/api/video/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ videoId, transcript, regenerate: false }),
+        });
+
+        const contentType = checkRes.headers.get('content-type') ?? '';
+        const isStream = contentType.includes('text/event-stream') || contentType.includes('octet-stream');
+
+        if (!isStream && checkRes.ok) {
+          // Réponse cache — texte brut, on set directement les notes
+          const cachedNotes = await checkRes.text();
+          if (cachedNotes) {
+            setNotes(cachedNotes);
+            return;
+          }
+        }
+      }
+
+      // 2. Pas de cache (ou forceRegenerate) → générer via stream SSE avec useCompletion
       await complete('', {
         body: {
           videoId,
           transcript,
           regenerate: forceRegenerate,
-        }
+        },
       });
     } catch (err) {
       console.error("Erreur lors de la génération des notes:", err);
@@ -358,8 +384,18 @@ export function StudyContent() {
 
   if (!transcript && !loading) {
     return (
-      <div className="min-h-screen bg-[#0b0b0d] flex items-center justify-center">
-        <p className="text-white/50">Aucune transcription disponible.</p>
+      <div className="h-[calc(100vh-64px)] bg-surface-container-lowest flex items-center justify-center p-8">
+        <div className="text-center space-y-4 max-w-md">
+          <div className="w-16 h-16 rounded-2xl bg-on-surface/5 border border-on-surface/10 flex items-center justify-center mx-auto">
+            <FileText className="w-7 h-7 text-on-surface/30" />
+          </div>
+          <div className="space-y-2">
+            <p className="text-base font-semibold text-on-surface">Aucune transcription disponible</p>
+            <p className="text-sm text-on-surface/40 leading-relaxed">
+              Cette vidéo ne dispose pas de transcription exploitable. Essayez une autre vidéo ou vérifiez que les sous-titres sont activés.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -391,12 +427,13 @@ export function StudyContent() {
         handleExportTranscriptPDF={handleExportTranscriptPDF}
         activeSegmentRef={activeSegmentRef}
         isGenerating={isGenerating}
-        notes={notes}
+        notes={notes || (completion ? completion : null)}
         copied={copied}
         handleCopyNotes={handleCopyNotes}
         handleExportNotesPDF={handleExportNotesPDF}
         handleExportNotes={handleExportNotes}
         handleGenerateNotes={handleGenerateNotes}
+        loading={loading}
       />
 
       {/* Panneau Droit : Chat Assist & Quiz */}
@@ -407,6 +444,7 @@ export function StudyContent() {
         url={url}
         videoId={videoId}
         handleTimelineClick={handleTimelineClick}
+        loading={loading}
       />
     </div>
   );

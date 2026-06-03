@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { SegmentItem, VideoInfo } from './types';
 
@@ -47,6 +48,7 @@ export interface StudyLeftPanelProps {
   handleExportNotesPDF: () => void;
   handleExportNotes: () => void;
   handleGenerateNotes: (force?: boolean) => void;
+  loading?: boolean;
 }
 
 export function StudyLeftPanel({
@@ -74,6 +76,7 @@ export function StudyLeftPanel({
   handleExportNotesPDF,
   handleExportNotes,
   handleGenerateNotes,
+  loading = false,
 }: StudyLeftPanelProps) {
 
   /* ── Markdown renderer ─────────────────────── */
@@ -115,32 +118,42 @@ export function StudyLeftPanel({
               <VideoPlayer playerRef={playerRef} url={url} onTimeUpdate={onTimeUpdate} />
             </div>
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-surface-high to-surface-dim flex items-center justify-center">
-              <div className="text-on-surface/10 text-5xl">▶</div>
-            </div>
+            <Skeleton className="absolute inset-0 rounded-none" />
           )}
         </div>
 
         {/* ── VIDEO META ── */}
         <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <h1 className="text-2xl font-bold text-on-surface leading-tight tracking-tight">
-            {videoInfo?.title || 'Chargement de la vidéo…'}
-          </h1>
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-xs text-on-surface/35 font-medium">
-              {new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
-            </span>
-            <span className="w-1 h-1 rounded-full bg-on-surface/15" />
-            <Badge variant="outline" className="text-[10px] border-primary/20 bg-primary/5 text-primary font-bold px-2 py-0.5">
-              AI / ML
-            </Badge>
-            {maxScore && (
-              <Badge variant="outline" className="text-[10px] border-green-500/25 bg-green-500/8 text-green-400 font-bold gap-1 px-2 py-0.5 animate-in fade-in duration-300">
-                <Trophy className="w-2.5 h-2.5" />
-                Score Max: {maxScore}
-              </Badge>
-            )}
-          </div>
+          {loading ? (
+            <>
+              <Skeleton className="h-8 w-3/4" />
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold text-on-surface leading-tight tracking-tight">
+                {videoInfo?.title || 'Chargement de la vidéo…'}
+              </h1>
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-xs text-on-surface/35 font-medium">
+                  {new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </span>
+                <span className="w-1 h-1 rounded-full bg-on-surface/15" />
+                <Badge variant="outline" className="text-[10px] border-primary/20 bg-primary/5 text-primary font-bold px-2 py-0.5">
+                  AI / ML
+                </Badge>
+                {maxScore && (
+                  <Badge variant="outline" className="text-[10px] border-green-500/25 bg-green-500/8 text-green-400 font-bold gap-1 px-2 py-0.5 animate-in fade-in duration-300">
+                    <Trophy className="w-2.5 h-2.5" />
+                    Score Max: {maxScore}
+                  </Badge>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         {/* ── TABS CARD ── */}
@@ -177,6 +190,7 @@ export function StudyLeftPanel({
                 handleTimelineClick={handleTimelineClick}
                 handleExportTranscriptPDF={handleExportTranscriptPDF}
                 formatTime={formatTime}
+                loading={loading}
               />
             ) : (
               <NotesTab
@@ -231,7 +245,7 @@ function TabButton({
 function TranscriptTab({
   searchTerm, setSearchTerm, showTimestamps, setShowTimestamps,
   filteredSegments, currentTime, activeSegmentRef, handleTimelineClick,
-  handleExportTranscriptPDF, formatTime,
+  handleExportTranscriptPDF, formatTime, loading,
 }: {
   searchTerm: string; setSearchTerm: (v: string) => void;
   showTimestamps: boolean; setShowTimestamps: (v: boolean) => void;
@@ -240,6 +254,7 @@ function TranscriptTab({
   handleTimelineClick: (s: number) => void;
   handleExportTranscriptPDF: () => void;
   formatTime: (s: number) => string;
+  loading?: boolean;
 }) {
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
@@ -284,7 +299,16 @@ function TranscriptTab({
 
       {/* Segments list */}
       <div className="max-h-[380px] overflow-y-auto space-y-0.5 pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-        {filteredSegments.length > 0 ? (
+        {loading ? (
+          <>
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="flex gap-3 px-3 py-2.5">
+                <Skeleton className="h-4 w-12 shrink-0 rounded-md" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ))}
+          </>
+        ) : filteredSegments.length > 0 ? (
           filteredSegments.map((seg, idx) => {
             const isActive = currentTime >= seg.start && currentTime < seg.start + (seg.duration || 5);
             return (

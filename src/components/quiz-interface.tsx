@@ -10,7 +10,6 @@ import {
   RefreshCcw,
   Loader2,
   Trophy,
-  Sparkles,
   History,
   Zap,
 } from 'lucide-react';
@@ -224,7 +223,7 @@ export function QuizInterface({ transcript, videoId }: QuizInterfaceProps) {
         <div className="p-4">
           <Button onClick={startQuizGeneration}
             className="w-full h-10 bg-primary text-on-primary font-semibold rounded-xl text-sm gap-2 hover:brightness-105 shadow-md shadow-primary/15 transition-all">
-            <Sparkles className="w-4 h-4" />
+            <BrainCircuit className="w-4 h-4" />
             Lancer le Quiz
           </Button>
         </div>
