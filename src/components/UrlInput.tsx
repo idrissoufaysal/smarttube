@@ -51,7 +51,7 @@ export function UrlInput() {
     <form onSubmit={handleSubmit} className="w-full max-w-3xl mt-8 mx-auto">
       <div className="h-15 bg-surface-container/50 backdrop-blur-lg p-2 rounded-lg border border-outline-variant/10 shadow-2xl flex flex-col md:flex-row gap-2">
         <input
-          className="bg-transparent border-none focus:ring-0 w-full px-6 text-on-surface text-lg placeholder:text-neutral-600"
+          className="bg-transparent border-none w-full px-6 text-on-surface focus:ring-0 text-lg placeholder:text-neutral-600"
           placeholder="Collez un lien YouTube..."
           value={url}
           onChange={(e) => setUrl(e.target.value)}
