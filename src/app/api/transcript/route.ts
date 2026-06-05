@@ -1,9 +1,16 @@
-import { YoutubeTranscript } from 'youtube-transcript';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { getVectorStore } from '@/lib/pinecone';
 import { Document } from '@langchain/core/documents';
 import { prisma } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
 import { Innertube } from 'youtubei.js';
+import { Supadata } from '@supadata/js';
+
+// Étendre le timeout Vercel à 60s (plan Pro) ou 10s (Hobby)
+export const maxDuration = 60;
+
+// Client Supadata pour l'extraction de transcriptions YouTube
+const supadata = new Supadata({ apiKey: process.env.SUPADATA_API_KEY! });
 
 export async function POST(req: Request) {
   try {
@@ -39,16 +46,45 @@ export async function POST(req: Request) {
       });
     }
 
-    // 2. Cache miss: Récupère la transcription de YouTube
-    const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId);
+    // 2. Cache miss: Appel à Supadata pour la transcription
+    console.log(`[Transcript] Appel à Supadata pour "${videoId}"...`);
+    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
-    if (!transcriptItems || transcriptItems.length === 0) {
-      return Response.json({ error: 'Aucune transcription disponible pour cette vidéo.' }, { status: 404 });
+    const transcriptData = await supadata.youtube.transcript({
+      url: videoUrl,
+      lang: 'fr',  // Tente le français d'abord
+      text: false,  // Retourne les segments avec timestamps
+    });
+
+    // Si pas de contenu, essayer sans langue spécifique
+    if (!transcriptData?.content || transcriptData.content.length === 0) {
+      const fallbackData = await supadata.youtube.transcript({
+        url: videoUrl,
+        text: false,
+      });
+
+      if (!fallbackData?.content || fallbackData.content.length === 0) {
+        return Response.json(
+          { error: 'Aucun sous-titre trouvé pour cette vidéo.' },
+          { status: 404 }
+        );
+      }
+
+      transcriptData.content = fallbackData.content;
     }
 
-    const transcript = transcriptItems.map((item) => item.text).join(' ');
+    // Construire la transcription complète
+    const contentArray = transcriptData.content as any[];
+    const transcript = contentArray.map((seg) => seg.text).join(' ');
 
-    // 3. Cache miss: Récupère les métadonnées de la vidéo via youtubei.js
+    // Normaliser les segments (offset/duration en ms depuis Supadata)
+    const transcriptItems = contentArray.map((seg) => ({
+      text: seg.text,
+      offset: seg.offset,
+      duration: seg.duration,
+    }));
+
+    // 3. Récupère les métadonnées via youtubei.js (léger, pas de transcription)
     let title = 'Vidéo sans titre';
     let description = '';
     let thumbnail = '';
@@ -56,7 +92,7 @@ export async function POST(req: Request) {
     let duration = 0;
 
     try {
-      const yt = await Innertube.create();
+      const yt = await Innertube.create({ retrieve_player: false });
       const info = await yt.getInfo(videoId);
       const basicInfo = info.basic_info;
       title = basicInfo?.title || title;
@@ -65,10 +101,13 @@ export async function POST(req: Request) {
       author = basicInfo?.author || author;
       duration = basicInfo?.duration || duration;
     } catch (metadataError) {
-      console.warn(`[Metadata] Échec de la récupération des métadonnées pour "${videoId}":`, metadataError);
+      console.warn(`[Metadata] Échec des métadonnées pour "${videoId}":`, metadataError);
     }
 
-    // 4. Enregistrer la vidéo et les segments dans la base de données PostgreSQL
+    // 4. Récupérer l'utilisateur connecté (s'il y en a un)
+    const currentUserRecord = await getCurrentUser();
+
+    // 5. Enregistrer la vidéo et les segments dans PostgreSQL
     await prisma.video.create({
       data: {
         id: videoId,
@@ -78,6 +117,7 @@ export async function POST(req: Request) {
         author,
         duration,
         transcript,
+        userId: currentUserRecord?.id ?? null,
         segments: {
           create: transcriptItems.map((item) => ({
             text: item.text,
@@ -89,7 +129,7 @@ export async function POST(req: Request) {
     });
     console.log(`[Database] Vidéo "${videoId}" et ses segments enregistrés dans PostgreSQL.`);
 
-    // 5. Indexation dans Pinecone pour le RAG lancée en arrière-plan pour ne pas bloquer l'utilisateur
+    // 5. Indexation Pinecone en arrière-plan
     const indexPineconeBackground = async () => {
       try {
         const splitter = new RecursiveCharacterTextSplitter({
@@ -97,7 +137,6 @@ export async function POST(req: Request) {
           chunkOverlap: 200,
         });
 
-        // Regrouper les lignes courtes en blocs de ~1000 caractères pour optimiser les requêtes d'embeddings
         const groupedDocuments: Document[] = [];
         let currentText = "";
         let currentStart = 0;
@@ -128,19 +167,16 @@ export async function POST(req: Request) {
         }
 
         const splits = await splitter.splitDocuments(groupedDocuments);
-
         const vectorStore = await getVectorStore(videoId);
         await vectorStore.addDocuments(splits);
-        console.log(`[Pinecone] ${splits.length} segments indexés dans le namespace "${videoId}" (arrière-plan terminé)`);
+        console.log(`[Pinecone] ${splits.length} segments indexés dans le namespace "${videoId}"`);
       } catch (pineconeError: any) {
-        console.error("Erreur lors de l'indexation Pinecone en arrière-plan:", pineconeError);
+        console.error("Erreur Pinecone en arrière-plan:", pineconeError);
       }
     };
 
-    // Lancer en arrière-plan
     indexPineconeBackground();
 
-    // Retourne les segments avec timestamps + le texte concaténé pour le chat
     return Response.json({
       transcript,
       pineconeIndexed: true,

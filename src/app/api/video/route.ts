@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
 
 export async function DELETE(req: Request) {
   try {
@@ -10,8 +11,27 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'videoId requis' }, { status: 400 });
     }
 
+    // Vérifier que l'utilisateur est connecté
+    const currentUserRecord = await getCurrentUser();
+    if (!currentUserRecord) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    // Vérifier que l'utilisateur est propriétaire de la vidéo
+    const video = await prisma.video.findUnique({
+      where: { id: videoId },
+      select: { userId: true },
+    });
+
+    if (!video) {
+      return NextResponse.json({ error: 'Vidéo introuvable' }, { status: 404 });
+    }
+
+    if (video.userId && video.userId !== currentUserRecord.id) {
+      return NextResponse.json({ error: 'Non autorisé à supprimer cette vidéo' }, { status: 403 });
+    }
+
     // Suppression en cascade (segments, quiz, attempts, messages)
-    // Prisma cascade delete si défini dans le schéma, sinon on supprime manuellement
     await prisma.video.delete({
       where: { id: videoId },
     });
@@ -19,7 +39,6 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Erreur suppression vidéo:', error);
-    // P2025 = record not found
     if (error?.code === 'P2025') {
       return NextResponse.json({ error: 'Vidéo introuvable' }, { status: 404 });
     }

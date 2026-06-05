@@ -2,6 +2,7 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { convertToModelMessages, streamText, UIMessage } from 'ai';
 import { getVectorStore } from '@/lib/pinecone';
 import { prisma } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
 
 // Autoriser le streaming de la réponse jusqu'à 30 secondes
 export const maxDuration = 30;
@@ -12,6 +13,9 @@ export async function POST(req: Request) {
 
     let context = '';
     let usingRAG = false;
+
+    // Récupérer l'utilisateur connecté
+    const currentUserRecord = await getCurrentUser();
     
     const userMessages = messages.filter((m) => m.role === 'user');
     const latestUserMessage = userMessages[userMessages.length - 1];
@@ -30,6 +34,7 @@ export async function POST(req: Request) {
             videoId,
             role: 'user',
             content: latestUserQuery,
+            userId: currentUserRecord?.id ?? null,
           },
         });
       } catch (dbError) {
@@ -97,6 +102,7 @@ Instructions impératives pour tes réponses :
                 videoId,
                 role: 'assistant',
                 content: text,
+                userId: currentUserRecord?.id ?? null,
               },
             });
           } catch (dbError) {

@@ -1,12 +1,16 @@
 import { prisma } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
-    const { videoId, quizId, score, total, difficulty, userId } = await req.json();
+    const { videoId, quizId, score, total, difficulty } = await req.json();
 
     if (!videoId || !quizId || score === undefined || total === undefined || !difficulty) {
       return Response.json({ error: 'Champs requis manquants.' }, { status: 400 });
     }
+
+    // Récupérer l'utilisateur connecté (peut être null si pas connecté)
+    const currentUserRecord = await getCurrentUser();
 
     const attempt = await prisma.quizAttempt.create({
       data: {
@@ -15,7 +19,7 @@ export async function POST(req: Request) {
         score: parseInt(score, 10),
         total: parseInt(total, 10),
         difficulty,
-        userId: userId || null,
+        userId: currentUserRecord?.id ?? null,
       },
     });
 
@@ -30,23 +34,27 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const videoId = searchParams.get('videoId');
-    const userId = searchParams.get('userId');
 
     if (!videoId) {
       return Response.json({ error: 'videoId est requis.' }, { status: 400 });
     }
 
-    // Récupérer les tentatives. Si userId est fourni, on filtre par celui-ci, 
-    // sinon on récupère toutes les tentatives pour cette vidéo (mode anonyme ou global)
+    // Récupérer l'utilisateur connecté pour filtrer ses tentatives
+    const currentUserRecord = await getCurrentUser();
+
     const attempts = await prisma.quizAttempt.findMany({
       where: {
         videoId,
-        OR: userId ? [{ userId }, { userId: null }] : undefined,
+        // Si connecté, montrer les tentatives de l'utilisateur + anonymes
+        // Si non connecté, montrer uniquement les anonymes
+        OR: currentUserRecord
+          ? [{ userId: currentUserRecord.id }, { userId: null }]
+          : [{ userId: null }],
       },
       orderBy: {
         createdAt: 'desc',
       },
-      take: 10, // Récupère les 10 dernières tentatives
+      take: 10,
     });
 
     return Response.json({ attempts });

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { getCurrentUserId } from '@/lib/auth';
 
 export async function GET(req: Request) {
   try {
@@ -10,8 +11,17 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Video ID is required' }, { status: 400 });
     }
 
+    // Récupérer l'utilisateur connecté pour filtrer ses messages
+    const userId = await getCurrentUserId();
+
     const messages = await prisma.chatMessage.findMany({
-      where: { videoId },
+      where: {
+        videoId,
+        // Si connecté, montrer ses messages + anonymes. Sinon juste anonymes.
+        OR: userId
+          ? [{ userId }, { userId: null }]
+          : [{ userId: null }],
+      },
       orderBy: { createdAt: 'asc' },
     });
 

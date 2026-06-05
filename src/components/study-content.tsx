@@ -24,6 +24,7 @@ export function StudyContent() {
   const [transcript, setTranscript] = useState('');
   const [segments, setSegments] = useState<SegmentItem[]>([]);
   const [notes, setNotes] = useState<string | null>(null);
+  const [isCheckingNotes, setIsCheckingNotes] = useState(false); // Couvre la vérification cache + démarrage stream
   
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
@@ -150,6 +151,7 @@ export function StudyContent() {
     try {
       setNotes(null);
       setCompletion('');
+      setIsCheckingNotes(true); // ← spinner immédiat dès le clic
 
       // 1. Vérifier d'abord si les notes sont déjà en cache (réponse texte brut)
       //    L'API retourne new Response(texte) pour le cache, et toTextStreamResponse()
@@ -169,12 +171,15 @@ export function StudyContent() {
           const cachedNotes = await checkRes.text();
           if (cachedNotes) {
             setNotes(cachedNotes);
+            setIsCheckingNotes(false);
             return;
           }
         }
       }
 
       // 2. Pas de cache (ou forceRegenerate) → générer via stream SSE avec useCompletion
+      // isGenerating (useCompletion) prend le relais dès que complete() démarre
+      setIsCheckingNotes(false);
       await complete('', {
         body: {
           videoId,
@@ -184,6 +189,7 @@ export function StudyContent() {
       });
     } catch (err) {
       console.error("Erreur lors de la génération des notes:", err);
+      setIsCheckingNotes(false);
     }
   };
 
@@ -426,7 +432,7 @@ export function StudyContent() {
         handleTimelineClick={handleTimelineClick}
         handleExportTranscriptPDF={handleExportTranscriptPDF}
         activeSegmentRef={activeSegmentRef}
-        isGenerating={isGenerating}
+        isGenerating={isGenerating || isCheckingNotes}
         notes={notes || (completion ? completion : null)}
         copied={copied}
         handleCopyNotes={handleCopyNotes}

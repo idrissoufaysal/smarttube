@@ -120,6 +120,17 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
+exports.Prisma.UserScalarFieldEnum = {
+  id: 'id',
+  clerkId: 'clerkId',
+  email: 'email',
+  firstName: 'firstName',
+  lastName: 'lastName',
+  imageUrl: 'imageUrl',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.VideoScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -129,6 +140,7 @@ exports.Prisma.VideoScalarFieldEnum = {
   duration: 'duration',
   transcript: 'transcript',
   notes: 'notes',
+  userId: 'userId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -172,6 +184,7 @@ exports.Prisma.QuizAttemptScalarFieldEnum = {
 exports.Prisma.ChatMessageScalarFieldEnum = {
   id: 'id',
   videoId: 'videoId',
+  userId: 'userId',
   role: 'role',
   content: 'content',
   createdAt: 'createdAt'
@@ -194,6 +207,7 @@ exports.Prisma.NullsOrder = {
 
 
 exports.Prisma.ModelName = {
+  User: 'User',
   Video: 'Video',
   Segment: 'Segment',
   Quiz: 'Quiz',

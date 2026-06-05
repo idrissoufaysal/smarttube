@@ -7,6 +7,20 @@ generator client {
   output   = "../generated"
 }
 
+model User {
+  id           String        @id @default(uuid())
+  clerkId      String        @unique // Clerk User ID (user_xxx)
+  email        String        @unique
+  firstName    String?
+  lastName     String?
+  imageUrl     String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  videos       Video[]
+  quizAttempts QuizAttempt[]
+  chatMessages ChatMessage[]
+}
+
 model Video {
   id           String        @id // YouTube Video ID (e.g. dQw4w9WgXcQ)
   title        String
@@ -16,12 +30,16 @@ model Video {
   duration     Int // in seconds
   transcript   String        @db.Text
   notes        String?       @db.Text
+  userId       String? // FK vers User (optionnel pour rétro-compat)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   segments     Segment[]
   quizzes      Quiz[]
   attempts     QuizAttempt[]
   chatMessages ChatMessage[]
+
+  @@index([userId])
 }
 
 model Segment {
@@ -66,7 +84,8 @@ model QuizAttempt {
   video      Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
   quizId     String
   quiz       Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  userId     String? // Clerk User ID if authenticated
+  userId     String? // FK vers User
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   score      Int
   total      Int
   difficulty String // 'facile', 'moyen', 'difficile'
@@ -74,16 +93,20 @@ model QuizAttempt {
 
   @@index([videoId])
   @@index([quizId])
+  @@index([userId])
 }
 
 model ChatMessage {
   id        String   @id @default(uuid())
   videoId   String
   video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  userId    String? // FK vers User
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   role      String // 'user', 'assistant', 'system'
   content   String   @db.Text
   createdAt DateTime @default(now())
 
   @@index([videoId])
+  @@index([userId])
   @@index([createdAt])
 }

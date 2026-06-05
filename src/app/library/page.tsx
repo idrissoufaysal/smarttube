@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { auth } from '@clerk/nextjs/server';
 import Link from 'next/link';
 import Image from 'next/image';
 import { DeleteVideoButton } from '@/components/library/delete-video-button';
@@ -9,7 +10,25 @@ import { Play, Clock, BookOpen, Database, Library } from 'lucide-react';
    ───────────────────────────────────────────── */
 async function getLibraryVideos() {
   try {
+    // Récupérer le clerkId depuis la session
+    const { userId: clerkId } = await auth();
+
+    if (!clerkId) {
+      return null; // Pas connecté (ne devrait pas arriver car route protégée)
+    }
+
+    // Trouver l'utilisateur en base
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return []; // Utilisateur pas encore en base (pas de vidéos)
+    }
+
     return await prisma.video.findMany({
+      where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,

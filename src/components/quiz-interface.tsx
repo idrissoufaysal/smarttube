@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@clerk/nextjs';
+
 import {
   BrainCircuit,
   CheckCircle2,
@@ -66,7 +66,6 @@ const OPTION_KEYS = ['A', 'B', 'C', 'D', 'E'];
    Main Component
    ═══════════════════════════════════════════ */
 export function QuizInterface({ transcript, videoId }: QuizInterfaceProps) {
-  const { userId } = useAuth();
 
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('moyen');
   const [selectedQuestionsCount, setSelectedQuestionsCount] = useState<5 | 10 | 15>(5);
@@ -87,7 +86,7 @@ export function QuizInterface({ transcript, videoId }: QuizInterfaceProps) {
     if (!videoId) return;
     setLoadingAttempts(true);
     try {
-      const res = await fetch(`/api/quiz/attempt?videoId=${videoId}${userId ? `&userId=${userId}` : ''}`);
+      const res = await fetch(`/api/quiz/attempt?videoId=${videoId}`);
       if (res.ok) { const d = await res.json(); setAttempts(d.attempts || []); }
     } catch (e) { console.error(e); }
     finally { setLoadingAttempts(false); }
@@ -144,7 +143,7 @@ export function QuizInterface({ transcript, videoId }: QuizInterfaceProps) {
       await fetch('/api/quiz/attempt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videoId, quizId, score: finalScore, total: questions.length, difficulty: selectedDifficulty, userId: userId || undefined }),
+        body: JSON.stringify({ videoId, quizId, score: finalScore, total: questions.length, difficulty: selectedDifficulty }),
       });
       fetchAttempts();
     } catch (e) { console.error(e); }

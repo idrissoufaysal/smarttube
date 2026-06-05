@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 // Protect study pages, leaving landing page and APIs public by default
-const isProtectedRoute = createRouteMatcher(['/study(.*)']);
+const isProtectedRoute = createRouteMatcher(['/study(.*)', '/library(.*)']);
 
 export const proxy = clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
