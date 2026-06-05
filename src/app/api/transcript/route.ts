@@ -84,22 +84,22 @@ export async function POST(req: Request) {
       duration: seg.duration,
     }));
 
-    // 3. Récupère les métadonnées via youtubei.js (léger, pas de transcription)
+    // 3. Récupère les métadonnées via l'API oEmbed de YouTube (évite les blocages d'IP sur Vercel)
     let title = 'Vidéo sans titre';
     let description = '';
-    let thumbnail = '';
+    let thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
     let author = '';
     let duration = 0;
 
     try {
-      const yt = await Innertube.create({ retrieve_player: false });
-      const info = await yt.getInfo(videoId);
-      const basicInfo = info.basic_info;
-      title = basicInfo?.title || title;
-      description = basicInfo?.short_description || description;
-      thumbnail = basicInfo?.thumbnail?.[0]?.url || thumbnail;
-      author = basicInfo?.author || author;
-      duration = basicInfo?.duration || duration;
+      const oEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+      const oEmbedRes = await fetch(oEmbedUrl);
+      if (oEmbedRes.ok) {
+        const oData = await oEmbedRes.json();
+        title = oData.title || title;
+        author = oData.author_name || author;
+        thumbnail = oData.thumbnail_url || thumbnail;
+      }
     } catch (metadataError) {
       console.warn(`[Metadata] Échec des métadonnées pour "${videoId}":`, metadataError);
     }

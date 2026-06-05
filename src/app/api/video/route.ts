@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { getPineconeIndex } from '@/lib/pinecone';
 
 export async function DELETE(req: Request) {
   try {
@@ -29,6 +30,13 @@ export async function DELETE(req: Request) {
 
     if (video.userId && video.userId !== currentUserRecord.id) {
       return NextResponse.json({ error: 'Non autorisé à supprimer cette vidéo' }, { status: 403 });
+    }
+
+    // Suppression des vecteurs dans Pinecone
+    try {
+      await getPineconeIndex().namespace(videoId).deleteAll();
+    } catch (pineconeError) {
+      console.error('Erreur suppression Pinecone:', pineconeError);
     }
 
     // Suppression en cascade (segments, quiz, attempts, messages)

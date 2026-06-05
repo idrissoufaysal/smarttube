@@ -41,19 +41,24 @@ export async function POST(req: Request) {
       });
     }
 
-    // 2. Cache miss: Crée une instance YouTube et extrait les informations en ligne
-    const yt = await Innertube.create();
-    const info = await yt.getInfo(videoId);
-    const basicInfo = info.basic_info;
+    // 2. Cache miss: Fetch metadata using oEmbed (to avoid Vercel IP blocks with Innertube)
+    const oEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+    const oEmbedRes = await fetch(oEmbedUrl);
+
+    if (!oEmbedRes.ok) {
+      return Response.json({ error: 'Vidéo introuvable ou privée.' }, { status: 404 });
+    }
+
+    const oData = await oEmbedRes.json();
 
     return Response.json({
-      title: basicInfo?.title || 'Vidéo sans titre',
-      description: basicInfo?.short_description || '',
-      thumbnail: basicInfo?.thumbnail?.[0]?.url || '',
-      author: basicInfo?.author || '',
-      viewCount: basicInfo?.view_count || 0,
-      publishDate: (basicInfo as any)?.publish_date || '',
-      duration: basicInfo?.duration || 0,
+      title: oData.title || 'Vidéo sans titre',
+      description: '', // oEmbed doesn't provide description
+      thumbnail: oData.thumbnail_url || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+      author: oData.author_name || '',
+      viewCount: 0,
+      publishDate: '',
+      duration: 0,
     });
   } catch (error) {
     console.error('Erreur video-info:', error);
