@@ -1,13 +1,31 @@
 import { prisma } from '@/lib/db';
-import { Innertube } from 'youtubei.js';
+import { getCurrentUser } from '@/lib/auth';
+import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+const VideoInfoRequestSchema = z.object({
+  url: z.string().url()
+});
 
 export async function POST(req: Request) {
   try {
-    const { url } = await req.json();
+    // Rate Limiting (20 requêtes par minute)
+    const rateLimitResponse = checkRateLimit(req, 20, 60 * 1000);
+    if (rateLimitResponse) return rateLimitResponse;
 
-    if (!url) {
-      return Response.json({ error: 'URL YouTube requise.' }, { status: 400 });
+    // Récupérer l'utilisateur connecté (Strict Check)
+    const currentUserRecord = await getCurrentUser();
+    if (!currentUserRecord) {
+      return Response.json({ error: 'Non autorisé. Veuillez vous connecter.' }, { status: 401 });
     }
+
+    const body = await req.json();
+    const parsedBody = VideoInfoRequestSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return Response.json({ error: 'Données invalides', details: parsedBody.error.errors }, { status: 400 });
+    }
+
+    const { url } = parsedBody.data;
 
     // Extrait l'ID vidéo
     const videoId = extractVideoId(url);

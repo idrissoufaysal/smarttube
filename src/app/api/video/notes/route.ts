@@ -1,16 +1,37 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { streamText } from 'ai';
 import { prisma } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
+import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+const NotesRequestSchema = z.object({
+  videoId: z.string().min(1),
+  transcript: z.string().optional(),
+  regenerate: z.boolean().optional()
+});
 
 export const maxDuration = 60; // Autoriser jusqu'à 60 secondes pour la génération
 
 export async function POST(req: Request) {
   try {
-    const { videoId, transcript, regenerate } = await req.json();
+    // Rate Limiting (5 requêtes par minute)
+    const rateLimitResponse = checkRateLimit(req, 5, 60 * 1000);
+    if (rateLimitResponse) return rateLimitResponse;
 
-    if (!videoId) {
-      return new Response('ID de vidéo requis.', { status: 400 });
+    // Récupérer l'utilisateur connecté (Strict Check)
+    const currentUserRecord = await getCurrentUser();
+    if (!currentUserRecord) {
+      return new Response(JSON.stringify({ error: 'Non autorisé. Veuillez vous connecter.' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
     }
+
+    const body = await req.json();
+    const parsedBody = NotesRequestSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return new Response(JSON.stringify({ error: 'Données invalides', details: parsedBody.error.errors }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    const { videoId, transcript, regenerate } = parsedBody.data;
 
     // 1. Tenter de récupérer depuis le cache si on ne force pas la régénération
     if (!regenerate) {

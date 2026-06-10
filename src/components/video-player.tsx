@@ -12,15 +12,46 @@ export interface VideoPlayerProps {
   onTimeUpdate?: (time: number) => void;
 }
 
+function extractVideoId(url: string): string | null {
+  if (!url) return null;
+  
+  // Si c'est déjà un ID propre de 11 caractères
+  if (/^[\w-]{11}$/.test(url)) {
+    return url;
+  }
+  
+  // Si c'est déjà préfixé par youtube/
+  if (url.startsWith('youtube/')) {
+    const id = url.substring(8);
+    if (/^[\w-]{11}$/.test(id)) {
+      return id;
+    }
+  }
+
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([\w-]{11})/,
+    /youtube-nocookie\.com\/embed\/([\w-]{11})/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+
+  return null;
+}
+
 export default function VideoPlayer({ url, playerRef, onTimeUpdate }: VideoPlayerProps) {
+  const videoId = extractVideoId(url);
+  const src = videoId ? `youtube/${videoId}` : url;
+
   return (
     <MediaPlayer
       ref={playerRef}
-      src={url}
+      src={src}
       viewType="video"
       streamType="on-demand"
       logLevel="warn"
-      crossOrigin
       playsInline
       autoplay
       className="w-full h-full bg-black"
@@ -31,3 +62,4 @@ export default function VideoPlayer({ url, playerRef, onTimeUpdate }: VideoPlaye
     </MediaPlayer>
   );
 }
+

@@ -2,25 +2,38 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { getPineconeIndex } from '@/lib/pinecone';
+import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+const VideoDeleteSchema = z.object({
+  videoId: z.string().min(1)
+});
 
 export async function DELETE(req: Request) {
   try {
+    // Rate Limiting (5 requêtes par minute)
+    const rateLimitResponse = checkRateLimit(req, 5, 60 * 1000);
+    if (rateLimitResponse) return rateLimitResponse;
+
+    // Vérifier que l'utilisateur est connecté (Strict Check)
+    const currentUserRecord = await getCurrentUser();
+    if (!currentUserRecord) {
+      return NextResponse.json({ error: 'Non autorisé. Veuillez vous connecter.' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const videoId = searchParams.get('videoId');
 
-    if (!videoId) {
-      return NextResponse.json({ error: 'videoId requis' }, { status: 400 });
+    const parsedQuery = VideoDeleteSchema.safeParse({ videoId });
+    if (!parsedQuery.success) {
+      return NextResponse.json({ error: 'Données invalides', details: parsedQuery.error.errors }, { status: 400 });
     }
 
-    // Vérifier que l'utilisateur est connecté
-    const currentUserRecord = await getCurrentUser();
-    if (!currentUserRecord) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
+    const validVideoId = parsedQuery.data.videoId;
 
     // Vérifier que l'utilisateur est propriétaire de la vidéo
     const video = await prisma.video.findUnique({
-      where: { id: videoId },
+      where: { id: validVideoId },
       select: { userId: true },
     });
 
@@ -34,14 +47,14 @@ export async function DELETE(req: Request) {
 
     // Suppression des vecteurs dans Pinecone
     try {
-      await getPineconeIndex().namespace(videoId).deleteAll();
+      await getPineconeIndex().namespace(validVideoId).deleteAll();
     } catch (pineconeError) {
       console.error('Erreur suppression Pinecone:', pineconeError);
     }
 
     // Suppression en cascade (segments, quiz, attempts, messages)
     await prisma.video.delete({
-      where: { id: videoId },
+      where: { id: validVideoId },
     });
 
     return NextResponse.json({ success: true });

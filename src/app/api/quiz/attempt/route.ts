@@ -1,25 +1,51 @@
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+const QuizAttemptPostSchema = z.object({
+  videoId: z.string().min(1),
+  quizId: z.string().min(1),
+  score: z.union([z.number(), z.string()]),
+  total: z.union([z.number(), z.string()]),
+  difficulty: z.enum(['facile', 'moyen', 'difficile'])
+});
+
+const QuizAttemptGetSchema = z.object({
+  videoId: z.string().min(1)
+});
 
 export async function POST(req: Request) {
   try {
-    const { videoId, quizId, score, total, difficulty } = await req.json();
+    // Rate Limiting (10 requêtes par minute)
+    const rateLimitResponse = checkRateLimit(req, 10, 60 * 1000);
+    if (rateLimitResponse) return rateLimitResponse;
 
-    if (!videoId || !quizId || score === undefined || total === undefined || !difficulty) {
-      return Response.json({ error: 'Champs requis manquants.' }, { status: 400 });
+    // Récupérer l'utilisateur connecté (Strict Check)
+    const currentUserRecord = await getCurrentUser();
+    if (!currentUserRecord) {
+      return Response.json({ error: 'Non autorisé. Veuillez vous connecter.' }, { status: 401 });
     }
 
-    // Récupérer l'utilisateur connecté (peut être null si pas connecté)
-    const currentUserRecord = await getCurrentUser();
+    const body = await req.json();
+    const parsedBody = QuizAttemptPostSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return Response.json({ error: 'Données invalides', details: parsedBody.error.errors }, { status: 400 });
+    }
+
+    const { videoId, quizId, score, total, difficulty } = parsedBody.data;
+
+    const parsedScore = typeof score === 'number' ? score : parseInt(score, 10);
+    const parsedTotal = typeof total === 'number' ? total : parseInt(total, 10);
 
     const attempt = await prisma.quizAttempt.create({
       data: {
         videoId,
         quizId,
-        score: parseInt(score, 10),
-        total: parseInt(total, 10),
+        score: parsedScore,
+        total: parsedTotal,
         difficulty,
-        userId: currentUserRecord?.id ?? null,
+        userId: currentUserRecord.id,
       },
     });
 
@@ -32,24 +58,28 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
+    // Rate Limiting (10 requêtes par minute)
+    const rateLimitResponse = checkRateLimit(req, 10, 60 * 1000);
+    if (rateLimitResponse) return rateLimitResponse;
+
+    // Récupérer l'utilisateur connecté (Strict Check)
+    const currentUserRecord = await getCurrentUser();
+    if (!currentUserRecord) {
+      return Response.json({ error: 'Non autorisé. Veuillez vous connecter.' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const videoId = searchParams.get('videoId');
 
-    if (!videoId) {
-      return Response.json({ error: 'videoId est requis.' }, { status: 400 });
+    const parsedQuery = QuizAttemptGetSchema.safeParse({ videoId });
+    if (!parsedQuery.success) {
+      return Response.json({ error: 'Données invalides', details: parsedQuery.error.errors }, { status: 400 });
     }
-
-    // Récupérer l'utilisateur connecté pour filtrer ses tentatives
-    const currentUserRecord = await getCurrentUser();
 
     const attempts = await prisma.quizAttempt.findMany({
       where: {
-        videoId,
-        // Si connecté, montrer les tentatives de l'utilisateur + anonymes
-        // Si non connecté, montrer uniquement les anonymes
-        OR: currentUserRecord
-          ? [{ userId: currentUserRecord.id }, { userId: null }]
-          : [{ userId: null }],
+        videoId: parsedQuery.data.videoId,
+        userId: currentUserRecord.id,
       },
       orderBy: {
         createdAt: 'desc',

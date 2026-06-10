@@ -3,26 +3,48 @@ import { convertToModelMessages, streamText, UIMessage } from 'ai';
 import { getVectorStore } from '@/lib/pinecone';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+const ChatRequestSchema = z.object({
+  messages: z.array(z.any()),
+  transcript: z.string().optional(),
+  videoId: z.string().optional()
+});
 
 // Autoriser le streaming de la réponse jusqu'à 30 secondes
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
   try {
-    const { messages, transcript, videoId }: { messages: UIMessage[]; transcript?: string; videoId?: string } = await req.json();
+    // Rate Limiting (10 requêtes par minute)
+    const rateLimitResponse = checkRateLimit(req, 10, 60 * 1000);
+    if (rateLimitResponse) return rateLimitResponse;
+
+    const body = await req.json();
+    const parsedBody = ChatRequestSchema.safeParse(body);
+    
+    if (!parsedBody.success) {
+      return new Response(JSON.stringify({ error: 'Données invalides', details: parsedBody.error.errors }), { status: 400 });
+    }
+
+    const { messages, transcript, videoId } = parsedBody.data;
 
     let context = '';
     let usingRAG = false;
 
-    // Récupérer l'utilisateur connecté
+    // Récupérer l'utilisateur connecté (Strict Check)
     const currentUserRecord = await getCurrentUser();
+    if (!currentUserRecord) {
+      return new Response(JSON.stringify({ error: 'Non autorisé. Veuillez vous connecter.' }), { status: 401 });
+    }
     
-    const userMessages = messages.filter((m) => m.role === 'user');
+    const userMessages = messages.filter((m: any) => m.role === 'user');
     const latestUserMessage = userMessages[userMessages.length - 1];
     const latestUserQuery = latestUserMessage?.parts
       ? latestUserMessage.parts
-          .filter((part) => part.type === 'text')
-          .map((part) => part.text)
+          .filter((part: any) => part.type === 'text')
+          .map((part: any) => part.text)
           .join(' ')
       : typeof (latestUserMessage as any)?.content === 'string' ? (latestUserMessage as any).content : '';
 

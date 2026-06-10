@@ -4,6 +4,15 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
+import { getCurrentUser } from '@/lib/auth';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+const QuizRequestSchema = z.object({
+  transcript: z.string().min(1),
+  difficulty: z.enum(['facile', 'moyen', 'difficile']).optional(),
+  numberOfQuestions: z.union([z.number(), z.string()]).optional(),
+  videoId: z.string().optional()
+});
 
 // Le schéma Zod définit exactement la structure de données de quiz.
 const quizSchema = z.object({
@@ -21,15 +30,31 @@ export const maxDuration = 60; // Autoriser jusqu'à 60 secondes pour la génér
 
 export async function POST(req: Request) {
   try {
-    console.log("Génération de quiz demandée");
+    // Rate Limiting (5 requêtes par minute)
+    const rateLimitResponse = checkRateLimit(req, 5, 60 * 1000);
+    if (rateLimitResponse) return rateLimitResponse;
 
-    const { transcript, difficulty = 'moyen', numberOfQuestions = 5, videoId } = await req.json();
-
-    if (!transcript) {
-      return NextResponse.json({ error: 'La transcription est requise' }, { status: 400 });
+    // Récupérer l'utilisateur connecté (Strict Check)
+    const currentUserRecord = await getCurrentUser();
+    if (!currentUserRecord) {
+      return NextResponse.json({ error: 'Non autorisé. Veuillez vous connecter.' }, { status: 401 });
     }
 
-    const count = parseInt(numberOfQuestions, 10) || 5;
+    console.log("Génération de quiz demandée");
+
+    const body = await req.json();
+    const parsedBody = QuizRequestSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'Données invalides', details: parsedBody.error.errors }, { status: 400 });
+    }
+
+    const { transcript, difficulty = 'moyen', numberOfQuestions = 5, videoId } = parsedBody.data;
+
+    const count = typeof numberOfQuestions === 'number'
+      ? numberOfQuestions
+      : typeof numberOfQuestions === 'string'
+        ? (parseInt(numberOfQuestions, 10) || 5)
+        : 5;
 
     // 1. Tenter de récupérer un quiz déjà généré depuis la base de données PostgreSQL
     if (videoId) {

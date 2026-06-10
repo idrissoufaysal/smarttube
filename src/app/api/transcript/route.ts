@@ -3,8 +3,13 @@ import { getVectorStore } from '@/lib/pinecone';
 import { Document } from '@langchain/core/documents';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
-import { Innertube } from 'youtubei.js';
 import { Supadata } from '@supadata/js';
+import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+const TranscriptRequestSchema = z.object({
+  url: z.string().url()
+});
 
 // Étendre le timeout Vercel à 60s (plan Pro) ou 10s (Hobby)
 export const maxDuration = 60;
@@ -14,10 +19,22 @@ const supadata = new Supadata({ apiKey: process.env.SUPADATA_API_KEY! });
 
 export async function POST(req: Request) {
   try {
-    const { url } = await req.json();
+    // Rate Limiting (5 requêtes par minute)
+    const rateLimitResponse = checkRateLimit(req, 5, 60 * 1000);
+    if (rateLimitResponse) return rateLimitResponse;
 
-    if (!url) {
-      return Response.json({ error: 'URL YouTube requise.' }, { status: 400 });
+    const body = await req.json();
+    const parsedBody = TranscriptRequestSchema.safeParse(body);
+
+    if (!parsedBody.success) {
+      return Response.json({ error: 'URL YouTube requise et doit être valide.' }, { status: 400 });
+    }
+    const { url } = parsedBody.data;
+    
+    // Vérification stricte de l'authentification avant de procéder
+    const currentUserRecord = await getCurrentUser();
+    if (!currentUserRecord) {
+      return Response.json({ error: 'Non autorisé. Veuillez vous connecter.' }, { status: 401 });
     }
 
     // Extrait l'ID vidéo depuis l'URL
@@ -104,8 +121,7 @@ export async function POST(req: Request) {
       console.warn(`[Metadata] Échec des métadonnées pour "${videoId}":`, metadataError);
     }
 
-    // 4. Récupérer l'utilisateur connecté (s'il y en a un)
-    const currentUserRecord = await getCurrentUser();
+    // 4. (Utilisateur déjà vérifié au début)
 
     // 5. Enregistrer la vidéo et les segments dans PostgreSQL
     await prisma.video.create({
@@ -117,7 +133,7 @@ export async function POST(req: Request) {
         author,
         duration,
         transcript,
-        userId: currentUserRecord?.id ?? null,
+        userId: currentUserRecord.id,
         segments: {
           create: transcriptItems.map((item) => ({
             text: item.text,
