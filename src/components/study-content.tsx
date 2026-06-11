@@ -9,6 +9,7 @@ import { StudyLeftPanel } from './study/study-left-panel';
 import { StudyRightPanel } from './study/study-right-panel';
 import { SegmentItem, VideoInfo } from './study/types';
 import { FileText } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function StudyContent() {
   const router = useRouter();
@@ -60,6 +61,7 @@ export function StudyContent() {
     },
     onFinish: (_, resultText) => {
       setNotes(resultText);
+      toast.success("Notes de cours générées avec succès !");
     },
   });
 
@@ -186,6 +188,7 @@ export function StudyContent() {
           if (cachedNotes) {
             setNotes(cachedNotes);
             setIsCheckingNotes(false);
+            toast.success("Notes de cours récupérées avec succès !");
             return;
           }
         }

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner"
 
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 const inter = Inter({
   variable: "--font-inter",
@@ -39,7 +39,7 @@ export default function RootLayout({
         <ClerkProvider>
           <Header />
           {children}
-          <Toaster richColors />
+          <Toaster richColors position="top-center" />
         </ClerkProvider>
       </body>
     </html>

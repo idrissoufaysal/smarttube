@@ -60,7 +60,8 @@
   --card-foreground: var(--on-surface);
   --popover: var(--surface-low);
   --popover-foreground: var(--on-surface);
-  --primary-foreground: var(--on-primary-container); /* dark red #5c0000 / brown text */
+  --primary-foreground: var(--on-primary-container);
+  /* dark red #5c0000 / brown text */
   --secondary-foreground: var(--on-secondary);
   --muted: var(--surface-container);
   --muted-foreground: var(--secondary);
@@ -382,9 +383,11 @@ html {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }
