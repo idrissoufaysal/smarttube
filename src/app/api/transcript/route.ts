@@ -49,6 +49,20 @@ export async function POST(req: Request) {
       include: { segments: { orderBy: { start: 'asc' } } },
     });
 
+    // Limite de 4 vidéos par utilisateur
+    const isAlreadyInLibrary = cachedVideo && cachedVideo.userId === currentUserRecord.id;
+    if (!isAlreadyInLibrary) {
+      const userVideoCount = await prisma.video.count({
+        where: { userId: currentUserRecord.id }
+      });
+      if (userVideoCount >= 4) {
+        return Response.json(
+          { error: "Limite de 4 vidéos atteinte. Veuillez supprimer une vidéo existante pour en ajouter une nouvelle." },
+          { status: 403 }
+        );
+      }
+    }
+
     if (cachedVideo) {
       console.log(`[Cache] Vidéo "${videoId}" récupérée depuis PostgreSQL.`);
       return Response.json({

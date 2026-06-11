@@ -3,6 +3,9 @@ import { auth } from '@clerk/nextjs/server';
 import Link from 'next/link';
 import Image from 'next/image';
 import { DeleteVideoButton } from '@/components/library/delete-video-button';
+import { AddVideoButton } from '@/components/library/add-video-button';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { Play, Clock, BookOpen, Database, Library } from 'lucide-react';
 
 /* ─────────────────────────────────────────────
@@ -128,6 +131,7 @@ function VideoCardComponent({ video }: { video: VideoCard }) {
             <Image
               src={video.thumbnail}
               alt={video.title}
+              loading='eager'
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
@@ -240,16 +244,37 @@ export default async function LibraryPage() {
               <p className="mt-2 text-sm text-on-surface/35 max-w-sm leading-relaxed">
                 Toutes les vidéos transformées en sessions d'étude actives.
               </p>
+
+              {/* Indicateur de limite d'usage (Shadcn UI Progress & Badge) */}
+              {videos !== null && (
+                <div className="mt-4 max-w-xs space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-on-surface/40 font-medium">Usage gratuit</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-on-surface/75 font-semibold font-mono">{videos.length} / 4</span>
+                      {videos.length >= 4 && (
+                        <Badge variant="destructive" className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider scale-90">
+                          Maximum
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <Progress value={(videos.length / 4) * 100} className="h-1 bg-white/5" />
+                </div>
+              )}
             </div>
 
-            {/* Stats */}
-            {videos && videos.length > 0 && (
-              <div className="flex items-center gap-2 shrink-0">
-                <StatPill value={videos.length} label="Vidéos" />
-                <StatPill value={totalSegments.toLocaleString()} label="Segments" />
-                <StatPill value={totalQuiz} label="Quiz" />
-              </div>
-            )}
+            {/* Stats + Add button */}
+            <div className="flex items-center gap-4 shrink-0 flex-wrap">
+              {videos && videos.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <StatPill value={videos.length} label="Vidéos" />
+                  <StatPill value={totalSegments.toLocaleString()} label="Segments" />
+                  <StatPill value={totalQuiz} label="Quiz" />
+                </div>
+              )}
+              <AddVideoButton variant="header" />
+            </div>
           </div>
         </div>
       </div>
@@ -294,13 +319,7 @@ export default async function LibraryPage() {
             <p className="text-sm text-on-surface/35 max-w-sm mb-8 leading-relaxed">
               Vous n&apos;avez pas encore étudié de vidéo. Collez un lien YouTube pour démarrer.
             </p>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold gradient-primary text-[#2b140f] shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-            >
-              <Play className="w-4 h-4 fill-current" />
-              Étudier ma première vidéo
-            </Link>
+            <AddVideoButton variant="empty-state" />
           </div>
         )}
 

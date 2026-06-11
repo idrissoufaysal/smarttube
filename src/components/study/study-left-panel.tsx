@@ -14,12 +14,16 @@ import {
   FileText,
   Clock,
   Trophy,
+  MessageSquare,
+  HelpCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { SegmentItem, VideoInfo } from './types';
+import { ChatInterface } from '@/components/chat-interface';
+import { QuizInterface } from '@/components/quiz-interface';
 
 const VideoPlayer = dynamic(() => import('@/components/video-player'), { ssr: false });
 
@@ -30,8 +34,8 @@ export interface StudyLeftPanelProps {
   onTimeUpdate: (time: number) => void;
   videoInfo: VideoInfo | null;
   maxScore: string | null;
-  studyTab: 'transcript' | 'notes';
-  setStudyTab: (tab: 'transcript' | 'notes') => void;
+  studyTab: 'transcript' | 'notes' | 'ai' | 'quiz';
+  setStudyTab: (tab: 'transcript' | 'notes' | 'ai' | 'quiz') => void;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   showTimestamps: boolean;
@@ -49,6 +53,8 @@ export interface StudyLeftPanelProps {
   handleExportNotes: () => void;
   handleGenerateNotes: (force?: boolean) => void;
   loading?: boolean;
+  transcript: string;
+  videoId: string | undefined;
 }
 
 export function StudyLeftPanel({
@@ -77,6 +83,8 @@ export function StudyLeftPanel({
   handleExportNotes,
   handleGenerateNotes,
   loading = false,
+  transcript,
+  videoId,
 }: StudyLeftPanelProps) {
 
   /* ── Markdown renderer ─────────────────────── */
@@ -159,8 +167,8 @@ export function StudyLeftPanel({
         {/* ── TABS CARD ── */}
         <div className="rounded-2xl border border-white/[0.05] bg-surface-dim/80 backdrop-blur-sm overflow-hidden shadow-xl shadow-black/20 animate-in fade-in slide-in-from-bottom-3 duration-600">
 
-          {/* Tab switcher */}
-          <div className="flex items-center border-b border-white/[0.05] bg-surface-low/50 px-4 pt-3 gap-1">
+          {/* Tab switcher - Desktop */}
+          <div className="hidden lg:flex items-center border-b border-white/[0.05] bg-surface-low/50 px-4 pt-3 gap-1">
             <TabButton
               active={studyTab === 'transcript'}
               icon={<FileText className="w-3.5 h-3.5" />}
@@ -176,9 +184,38 @@ export function StudyLeftPanel({
             />
           </div>
 
+          {/* Tab switcher - Mobile */}
+          <div className="flex lg:hidden items-center border-b border-white/[0.05] bg-surface-low/50 px-4 pt-3 gap-1 overflow-x-auto scrollbar-none">
+            <TabButton
+              active={studyTab === 'transcript'}
+              icon={<FileText className="w-3.5 h-3.5" />}
+              label="Transc."
+              onClick={() => setStudyTab('transcript')}
+            />
+            <TabButton
+              active={studyTab === 'notes'}
+              icon={<BrainCircuit className="w-3.5 h-3.5" />}
+              label="Notes"
+              onClick={() => setStudyTab('notes')}
+              highlight
+            />
+            <TabButton
+              active={studyTab === 'ai'}
+              icon={<MessageSquare className="w-3.5 h-3.5" />}
+              label="Chat IA"
+              onClick={() => setStudyTab('ai')}
+            />
+            <TabButton
+              active={studyTab === 'quiz'}
+              icon={<HelpCircle className="w-3.5 h-3.5" />}
+              label="Quiz"
+              onClick={() => setStudyTab('quiz')}
+            />
+          </div>
+
           {/* Tab content */}
           <div className="p-5">
-            {studyTab === 'transcript' ? (
+            {studyTab === 'transcript' && (
               <TranscriptTab
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
@@ -192,7 +229,8 @@ export function StudyLeftPanel({
                 formatTime={formatTime}
                 loading={loading}
               />
-            ) : (
+            )}
+            {studyTab === 'notes' && (
               <NotesTab
                 isGenerating={isGenerating}
                 notes={notes}
@@ -203,6 +241,27 @@ export function StudyLeftPanel({
                 handleGenerateNotes={handleGenerateNotes}
                 parseMarkdown={parseMarkdown}
               />
+            )}
+            {studyTab === 'ai' && (
+              <div className="h-[450px] overflow-hidden -mx-5 -my-5 p-1 bg-surface-low">
+                {transcript ? (
+                  <ChatInterface
+                    transcript={transcript}
+                    url={url}
+                    onTimelineClick={handleTimelineClick}
+                  />
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-on-surface-variant space-y-4">
+                    <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                    <p className="text-sm">Chargement de la transcription...</p>
+                  </div>
+                )}
+              </div>
+            )}
+            {studyTab === 'quiz' && (
+              <div className="h-[450px] overflow-y-auto px-1 -my-5 py-5 scrollbar-thin bg-surface-low">
+                <QuizInterface transcript={transcript} videoId={videoId} />
+              </div>
             )}
           </div>
         </div>

@@ -6,6 +6,7 @@ import { BrainCircuit,ArrowUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 interface ChatInterfaceProps {
   transcript: string;
@@ -108,7 +109,7 @@ function ChatInterfaceInner({
       parts.push(
         <button
           key={match.index}
-          onClick={() => onTimelineClick && onTimelineClick(totalSeconds)}
+          onClick={() => onTimelineClick && onTimelineClick(totalSeconds) && toast.success("Source atteinte avec")}
           className="inline-flex items-center gap-1.5 px-2.5 py-1 my-1 mx-1 bg-primary/10 border border-primary/20 rounded-full text-xs font-bold text-primary hover:bg-primary/20 active:scale-95 transition-all cursor-pointer inline-block"
           type="button"
         >

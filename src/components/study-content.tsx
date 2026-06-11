@@ -18,7 +18,21 @@ export function StudyContent() {
 
   // États principaux
   const [activeTab, setActiveTab] = useState('ai'); // AI Assistant vs Quiz
-  const [studyTab, setStudyTab] = useState<'transcript' | 'notes'>('transcript'); // Transcription vs Notes (Transcription par défaut)
+  const [studyTab, setStudyTab] = useState<'transcript' | 'notes' | 'ai' | 'quiz'>('transcript'); // Transcription vs Notes vs AI vs Quiz
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile && (studyTab === 'ai' || studyTab === 'quiz')) {
+        setStudyTab('transcript');
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [studyTab]);
   
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [transcript, setTranscript] = useState('');
@@ -412,7 +426,7 @@ export function StudyContent() {
   );
 
   return (
-    <div className="h-[calc(100vh-64px)] w-full overflow-hidden bg-surface-container-lowest flex flex-row">
+    <div className="h-[calc(100vh-64px)] w-full overflow-hidden bg-surface-container-lowest flex flex-col lg:flex-row">
       {/* Panneau Gauche : Lecteur Vidéo + Titre + Transcription/Notes */}
       <StudyLeftPanel
         url={url}
@@ -440,6 +454,8 @@ export function StudyContent() {
         handleExportNotes={handleExportNotes}
         handleGenerateNotes={handleGenerateNotes}
         loading={loading}
+        transcript={transcript}
+        videoId={videoId}
       />
 
       {/* Panneau Droit : Chat Assist & Quiz */}

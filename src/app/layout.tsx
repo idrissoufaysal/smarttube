@@ -4,6 +4,8 @@ import { Inter, Geist } from "next/font/google";
 import { Header } from "@/components/Header";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner"
+
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -37,6 +39,7 @@ export default function RootLayout({
         <ClerkProvider>
           <Header />
           {children}
+          <Toaster richColors />
         </ClerkProvider>
       </body>
     </html>

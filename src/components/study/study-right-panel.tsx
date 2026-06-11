@@ -25,7 +25,7 @@ export function StudyRightPanel({
   loading = false,
 }: StudyRightPanelProps) {
   return (
-    <div className="w-[450px] bg-surface-low border-l border-outline-variant/10 flex flex-col shrink-0 h-full overflow-hidden">
+    <div className="hidden lg:flex w-[450px] bg-surface-low border-l border-outline-variant/10 flex-col shrink-0 h-full overflow-hidden">
       <div className="border-b border-outline-variant/10 bg-surface-container-low flex gap-0 shrink-0">
         <button
           onClick={() => setActiveTab('ai')}

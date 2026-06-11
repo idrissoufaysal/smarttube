@@ -54,8 +54,9 @@ export function DeleteVideoButton({ videoId, videoTitle }: DeleteVideoButtonProp
             text-white/40 hover:text-red-400
             hover:bg-red-500/15 hover:border-red-500/30
             transition-all duration-200
-            opacity-0 group-hover:opacity-100
-            scale-90 group-hover:scale-100
+            opacity-100 scale-100
+            lg:opacity-0 lg:group-hover:opacity-100
+            lg:scale-90 lg:group-hover:scale-100
           "
           aria-label="Supprimer la vidéo"
           title="Supprimer"

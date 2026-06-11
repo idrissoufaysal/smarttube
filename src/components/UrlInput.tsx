@@ -49,9 +49,9 @@ export function UrlInput() {
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-3xl mt-8 mx-auto">
-      <div className="h-15 bg-surface-container/50 backdrop-blur-lg p-2 rounded-lg border border-outline-variant/10 shadow-2xl flex flex-col md:flex-row gap-2">
+      <div className="h-auto md:h-15 bg-surface-container/50 backdrop-blur-lg p-2 rounded-lg border border-outline-variant/10 shadow-2xl flex flex-col md:flex-row gap-2">
         <input
-          className="bg-transparent border-none w-full px-6 text-on-surface focus:ring-0 text-lg placeholder:text-neutral-600"
+          className="bg-transparent border-none w-full px-6 py-3 md:py-0 text-on-surface focus:ring-0 text-lg placeholder:text-neutral-600"
           placeholder="Collez un lien YouTube..."
           value={url}
           onChange={(e) => setUrl(e.target.value)}
@@ -59,7 +59,7 @@ export function UrlInput() {
         <button
           type="submit"
           disabled={loading || !url.trim()}
-          className="bg-linear-to-br from-primary to-primary-container text-on-primary-container w-full md:w-[35%] rounded-md font-bold text-lg hover:brightness-110 transition-all flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          className="bg-linear-to-br from-primary to-primary-container text-on-primary-container w-full md:w-[35%] py-3 md:py-0 rounded-md font-bold text-lg hover:brightness-110 transition-all flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           {loading ? (
             <span className="flex items-center gap-2">
