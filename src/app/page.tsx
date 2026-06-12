@@ -1,6 +1,7 @@
 import { UrlInput } from "@/components/UrlInput";
 import { RevealSection } from "@/components/reveal-section";
 import type { Metadata } from "next";
+import Image from "next/image";
 
 /* ─── SVG Icon Components ─── */
 const IconBrain = () => (
@@ -138,7 +139,7 @@ export default function Home() {
 
         {/* ══════ SHOWCASE ══════ */}
         <section className="relative py-8 md:py-16">
-          <div className="mx-auto max-w-6xl px-5 md:px-8">
+          <div className="mx-auto max-w-5xl px-5 md:px-8">
             <RevealSection>
               <div className="relative overflow-hidden rounded-3xl bg-[#0e0f12]">
                 <div className="relative h-[420px] w-full bg-gradient-to-b from-[#1a1c22] via-[#15171c] to-[#0e0f12]">
@@ -146,53 +147,18 @@ export default function Home() {
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,_rgba(255,255,255,0.06),_transparent_50%)]" />
 
                   {/* Mock UI preview */}
-                  <div className="absolute left-1/2 top-8 w-[85%] max-w-[700px] -translate-x-1/2 animate-float">
-                    <div className="overflow-hidden rounded-xl bg-[#17181d] ambient-shadow">
-                      {/* Title bar */}
-                      <div className="flex items-center gap-2 px-4 py-2.5 bg-[#111115]">
-                        <span className="h-2.5 w-2.5 rounded-full bg-[#ff5540]/60" />
-                        <span className="h-2.5 w-2.5 rounded-full bg-[#ffc78f]/40" />
-                        <span className="h-2.5 w-2.5 rounded-full bg-[#93b7ff]/40" />
-                        <span className="ml-3 text-[10px] text-white/25">SmartTube — Session d'étude</span>
-                      </div>
+                    
                       {/* Content */}
-                      <div className="flex gap-0">
-                        {/* Video area */}
-                        <div className="flex-1 p-3">
-                          <div className="aspect-video rounded-lg bg-gradient-to-br from-[#1e2028] to-[#13141a] flex items-center justify-center">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
-                              <IconPlay />
-                            </div>
-                          </div>
-                          <div className="mt-2.5 space-y-1.5">
-                            <div className="h-2.5 w-3/4 rounded bg-white/10" />
-                            <div className="h-2 w-1/2 rounded bg-white/5" />
-                          </div>
-                        </div>
-                        {/* Chat sidebar */}
-                        <div className="hidden w-[180px] bg-[#111115] p-3 sm:block">
-                          <div className="mb-2 h-2 w-16 rounded bg-white/10" />
-                          <div className="space-y-2">
-                            <div className="rounded-lg bg-[#ff5540]/15 p-2"><div className="h-1.5 w-full rounded bg-[#ffb4a8]/30" /><div className="mt-1 h-1.5 w-2/3 rounded bg-[#ffb4a8]/20" /></div>
-                            <div className="rounded-lg bg-[#1c1d22] p-2"><div className="h-1.5 w-full rounded bg-white/10" /><div className="mt-1 h-1.5 w-4/5 rounded bg-white/5" /><div className="mt-1 h-1.5 w-1/2 rounded bg-white/5" /></div>
-                          </div>
-                        </div>
+                      <div className="relative w-full overflow-hidden bg-[#0c0d10]" style={{ aspectRatio: "2800/1155" }}>
+                        <Image
+                          src="/img.png"
+                          alt="SmartTube Interface"
+                          fill
+                          className="object-cover object-top"
+                          priority
+                        />
                       </div>
-                    </div>
-                  </div>
 
-                  {/* Bottom fade */}
-                  <div className="absolute bottom-0 left-0 right-0 h-44 bg-gradient-to-t from-[#0e0f12] to-transparent" />
-
-                  {/* Text overlay */}
-                  <div className="absolute bottom-8 left-7 md:left-10">
-                    <h3 className="text-3xl font-bold text-white md:text-4xl">Conçu pour la maîtrise.</h3>
-                    <p className="mt-2 text-sm text-white/55">Le centre de commandement de l'étudiant moderne.</p>
-                  </div>
-                  <div className="absolute bottom-8 right-7 flex gap-2 md:right-10">
-                    <span className="rounded-full bg-white/5 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.1em] text-white/50">Optimisé OLED</span>
-                    <span className="rounded-full bg-white/5 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.1em] text-white/50">Lecteur sans publicité</span>
-                  </div>
                 </div>
               </div>
             </RevealSection>
@@ -226,22 +192,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ══════ STATS ══════ */}
-        <section className="relative py-12 md:py-20">
-          <div className="mx-auto max-w-6xl px-5 md:px-8">
-            <RevealSection>
-              <div className="grid grid-cols-2 gap-1 md:grid-cols-4">
-                {STATS.map((s) => (
-                  <div key={s.label} className="rounded-2xl bg-[#0f1014] py-10 text-center transition-colors duration-300 hover:bg-[#111116]">
-                    <p className="gradient-primary-text text-4xl font-extrabold md:text-5xl">{s.value}</p>
-                    <p className="mt-2 text-xs text-white/40 uppercase tracking-widest">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-            </RevealSection>
-          </div>
-        </section>
-
         {/* ══════ FINAL CTA ══════ */}
         <section className="relative py-16 md:py-28">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_60%_at_50%_100%,_rgba(255,85,64,0.1),_transparent_60%)]" />
@@ -256,7 +206,7 @@ export default function Home() {
                 </p>
                 <a
                   href="#url-input-section"
-                  className="mt-8 inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold gradient-primary text-[#2b140f] shadow-[0_8px_32px_rgba(255,85,64,0.25)] transition-all duration-200 hover:shadow-[0_16px_48px_rgba(255,85,64,0.3)] hover:scale-[1.03] active:scale-[0.98]"
+                  className="mt-8 inline-flex items-center gap-2 rounded-sm px-8 py-3.5 text-sm font-bold gradient-primary text-[#2b140f] shadow-[0_8px_32px_rgba(255,85,64,0.25)] transition-all duration-200 hover:shadow-[0_16px_48px_rgba(255,85,64,0.3)] hover:scale-[1.03] active:scale-[0.98]"
                 >
                   Commencer à apprendre — C'est gratuit
                   <IconArrow />

@@ -26,7 +26,6 @@ export function Header() {
           <nav className="hidden items-center gap-6 text-sm text-white/50 md:flex">
             <Link href="/" className="transition-colors duration-200 hover:text-white/90">Home</Link>
             <Link href="/library" className="transition-colors duration-200 hover:text-white/90">My Library</Link>
-            <a href="#" className="transition-colors duration-200 hover:text-white/90">Explore</a>
           </nav>
         </div>
         <div className="flex items-center gap-4 text-xs min-h-[32px]">
