@@ -59,12 +59,12 @@ export async function POST(req: Request) {
     }
 
     const openrouter = createOpenRouter({ apiKey: openrouterKey });
-    const model = openrouter.chat('nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free');
+    const model = openrouter.chat('google/gemini-2.5-flash');
 
     // 3. Lancer la génération de texte en streaming
     const result = streamText({
       model,
-      system: `Tu es un enseignant expert et pédagogue. Ta mission est de rédiger des notes de cours complètes, claires et hautement structurées en français à partir de la transcription d'une vidéo YouTube fournie.
+      system: `Tu es un enseignant expert et pédagogue. Ta mission est de rédiger des notes de cours complètes, claires et hautement structurées en français ou en anglais à partir de la transcription d'une vidéo YouTube fournie.
       
 Consignes impératives pour les notes :
 1. Utilise un format Markdown riche et soigné (titres #, ##, ###, listes à puces -, texte en **gras** pour souligner les concepts clés).

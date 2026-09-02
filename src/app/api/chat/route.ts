@@ -95,7 +95,7 @@ export async function POST(req: Request) {
     }
 
     const systemPrompt = context
-      ? `Tu es un assistant vidéo pédagogique et intelligent appelé SmartTube.
+      ? `Tu es un assistant vidéo pédagogique et intelligent appelé SmartTube tu repond gentiment quand on te salut.
 Ton rôle est d'aider l'utilisateur à comprendre la vidéo en te basant sur ${usingRAG ? "les extraits pertinents suivants de sa transcription avec leurs timelines" : "sa transcription complète"} :
 
 <contexte_video>
@@ -104,7 +104,6 @@ ${context}
 
 Instructions impératives pour tes réponses :
 1. Réponds de manière claire, concise et pédagogique en te basant sur ce contexte.
-2. Réponds obligatoirement en français.
 3. Pour chaque fait ou concept important que tu décris, tu dois citer sa timeline exacte sous le format précis : [Source: mm:ss] (ou [Source: hh:mm:ss] si la vidéo est longue). Base-toi strictement sur les annotations [Timeline: mm:ss] présentes dans le contexte. N'invente jamais de timeline !`
       : `Tu es un assistant vidéo pédagogique et intelligent appelé SmartTube. Tes réponses doivent IMPÉRATIVEMENT être en français.`;
 
@@ -113,7 +112,7 @@ Instructions impératives pour tes réponses :
     });
 
     const result = streamText({
-      model: openrouter.chat('nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free'),
+      model: openrouter.chat('google/gemini-2.5-flash'),
       system: systemPrompt,
       messages: await convertToModelMessages(messages),
       async onFinish({ text }) {

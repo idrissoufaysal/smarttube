@@ -21,11 +21,38 @@
 
 ---
 
-## 📸 Preview
+## 📸 Visual Walkthrough & Interface Tour
+
+### 🚀 1. Landing Page — Convert Any YouTube Video
+A sleek, high-conversion dark-mode interface inviting users to paste any YouTube URL to instantly extract transcripts, generate notes, and index content.
 
 <div align="center">
-  <img src="./public/img.png" alt="SmartTube Application Interface" style="border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 900px; box-shadow: 0 20px 50px rgba(0,0,0,0.25);" />
+  <img src="./public/screenshots/hero-landing.png" alt="SmartTube Landing Page" style="border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 900px; box-shadow: 0 20px 50px rgba(0,0,0,0.35);" />
 </div>
+
+> **Under the hood**: Instant client validation with Zod, smooth micro-animations, and asynchronous server ingestion trigger.
+
+---
+
+### 📂 2. Video Library & Learning Dashboard
+Centralized hub tracking saved video sessions, indexed transcript segments, active quiz attempts, and remaining usage limits.
+
+<div align="center">
+  <img src="./public/screenshots/library-collection.png" alt="SmartTube User Library" style="border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 900px; box-shadow: 0 20px 50px rgba(0,0,0,0.35);" />
+</div>
+
+> **Under the hood**: Optimized PostgreSQL relational queries via Prisma, live aggregation counters (total videos, indexed segments, quizzes completed), and Clerk authenticated session isolation.
+
+---
+
+### 💬 3. Interactive Study Hub — AI Copilot with Temporal Grounding
+Synchronized video player paired with an intelligent RAG tutor. The AI answers user questions citing precise timestamp badges (`voir [Source: mm:ss]`) that automatically seek the video to the referenced moment.
+
+<div align="center">
+  <img src="./public/screenshots/ai-chat-study.png" alt="SmartTube AI Chat & Study Session" style="border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 900px; box-shadow: 0 20px 50px rgba(0,0,0,0.35);" />
+</div>
+
+> **Under the hood**: Real-time streaming via Vercel AI SDK (`streamText`), Pinecone semantic vector similarity search with millisecond metadata filtering, and custom Vidstack video player controls.
 
 ---
 
@@ -41,8 +68,8 @@ Users can **ask questions with timestamped source citations**, generate **adapti
 
 ### 🤖 1. Retrieval-Augmented Generation (RAG) Video Copilot
 - **Semantic Vector Search**: Segments video transcripts into contextual chunks indexed in **Pinecone**.
-- **Real-Time Streaming AI Tutor**: Powered by **Vercel AI SDK** with support for OpenRouter, OpenAI, and Google Gemini models.
-- **Interactive Timestamp Citations**: Every answer provides clickable timestamps that instantly seek the video player to the exact moment.
+- **Real-Time Streaming AI Tutor**: Powered by **Vercel AI SDK** with OpenRouter and Google Gemini models (`gemini-2.5-flash`).
+- **Interactive Timestamp Citations**: Every answer provides clickable timestamps (`[Source: mm:ss]`) that instantly seek the video player to the exact moment.
 
 ### 📝 2. AI-Generated Interactive Quizzes & Assessments
 - **Customizable Difficulty Levels**: Generate quizzes for **Easy**, **Medium**, and **Hard** levels on the fly.

@@ -95,7 +95,7 @@ export async function POST(req: Request) {
       model = google('gemini-1.5-flash');
     } else if (openrouterKey) {
       const openrouter = createOpenRouter({ apiKey: openrouterKey });
-      model = openrouter.chat('nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free');
+      model = openrouter.chat('google/gemini-2.5-flash');
     } else {
       return NextResponse.json(
         { error: "Veuillez configurer GEMINI_API_KEY ou AI_KEY dans votre fichier .env." },
