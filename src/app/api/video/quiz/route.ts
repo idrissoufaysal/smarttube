@@ -116,7 +116,7 @@ ${transcript}
 Instructions :
 - Génère exactement ${count} questions.
 - Le niveau de difficulté doit être : ${difficulty}.
-- Les questions, options et explications doivent IMPÉRATIVEMENT être en français.
+- Les questions, options et explications doivent être en francais ou en anglais selon la langue de l'utilisateur.
 - Ne pose pas de questions sur des choses qui ne sont pas dites dans la transcription.`,
     });
 

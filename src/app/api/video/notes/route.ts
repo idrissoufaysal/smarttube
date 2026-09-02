@@ -73,7 +73,7 @@ Consignes impératives pour les notes :
    - **Concepts clés expliqués** (détaille chaque idée, définition, formule ou exemple important mentionné).
    - **Synthèse & À retenir** (résumé sous forme de points clés exploitables pour l'étude).
 3. Reste rigoureusement fidèle à la transcription. N'invente pas d'informations extérieures qui n'y figurent pas.
-4. Réponds obligatoirement en français de manière fluide et professionnelle.`,
+4. Réponds obligatoirement en français ou en anglais selon la langue de l'utilisateur de manière fluide et professionnelle.`,
       prompt: `Voici la transcription de la vidéo :\n\n${transcript}`,
       async onFinish({ text }) {
         try {
