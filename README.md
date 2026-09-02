@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="./public/logo.png" alt="SmartTube Logo" width="120" height="120" style="border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);" />
+  <img src="public/logo.png" alt="SmartTube Logo" width="120" />
 
   # 🎓 SmartTube — AI-Powered Video Learning Platform
   
@@ -26,9 +26,9 @@
 ### 🚀 1. Landing Page — Convert Any YouTube Video
 A sleek, high-conversion dark-mode interface inviting users to paste any YouTube URL to instantly extract transcripts, generate notes, and index content.
 
-<div align="center">
-  <img src="./public/screenshots/hero-landing.png" alt="SmartTube Landing Page" style="border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 900px; box-shadow: 0 20px 50px rgba(0,0,0,0.35);" />
-</div>
+<p align="center">
+  <img src="public/screenshots/hero-landing.png" alt="SmartTube Landing Page" width="900" />
+</p>
 
 > **Under the hood**: Instant client validation with Zod, smooth micro-animations, and asynchronous server ingestion trigger.
 
@@ -37,9 +37,9 @@ A sleek, high-conversion dark-mode interface inviting users to paste any YouTube
 ### 📂 2. Video Library & Learning Dashboard
 Centralized hub tracking saved video sessions, indexed transcript segments, active quiz attempts, and remaining usage limits.
 
-<div align="center">
-  <img src="./public/screenshots/library-collection.png" alt="SmartTube User Library" style="border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 900px; box-shadow: 0 20px 50px rgba(0,0,0,0.35);" />
-</div>
+<p align="center">
+  <img src="public/screenshots/library-collection.png" alt="SmartTube User Library" width="900" />
+</p>
 
 > **Under the hood**: Optimized PostgreSQL relational queries via Prisma, live aggregation counters (total videos, indexed segments, quizzes completed), and Clerk authenticated session isolation.
 
@@ -48,9 +48,9 @@ Centralized hub tracking saved video sessions, indexed transcript segments, acti
 ### 💬 3. Interactive Study Hub — AI Copilot with Temporal Grounding
 Synchronized video player paired with an intelligent RAG tutor. The AI answers user questions citing precise timestamp badges (`voir [Source: mm:ss]`) that automatically seek the video to the referenced moment.
 
-<div align="center">
-  <img src="./public/screenshots/ai-chat-study.png" alt="SmartTube AI Chat & Study Session" style="border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 900px; box-shadow: 0 20px 50px rgba(0,0,0,0.35);" />
-</div>
+<p align="center">
+  <img src="public/screenshots/ai-chat-study.png" alt="SmartTube AI Chat & Study Session" width="900" />
+</p>
 
 > **Under the hood**: Real-time streaming via Vercel AI SDK (`streamText`), Pinecone semantic vector similarity search with millisecond metadata filtering, and custom Vidstack video player controls.
 
